@@ -2,621 +2,588 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kneuralabs — Expense Tracker (Auto-Commit)</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>KneuraTRAX™ — Form‑Driven Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  :root {
-    --bg: #0f0f10;
-    --bg2: #18181c;
-    --bg3: #212128;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.14);
-    --text: #f0eff4;
-    --text2: #9996aa;
-    --text3: #615e72;
-    --accent: #7c6ee0;
-    --accent2: #a492f5;
-    --green: #3fb987;
-    --green-bg: rgba(63,185,135,0.12);
-    --red: #e05c5c;
-    --red-bg: rgba(224,92,92,0.10);
-    --amber: #e8a844;
-    --amber-bg: rgba(232,168,68,0.12);
-    --blue: #4a9de0;
-    --blue-bg: rgba(74,157,224,0.12);
-    --radius: 10px;
-    --radius-sm: 6px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
-  
-  /* LOADING SCREEN */
-  #load-screen {
-    position: fixed; inset: 0; background: var(--bg); z-index: 100;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
-  }
-  .load-logo { font-size: 13px; letter-spacing: 0.12em; font-weight: 600; color: var(--text2); text-transform: uppercase; }
-  .load-title { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, var(--accent2), var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .load-sub { font-size: 13px; color: var(--text2); }
-  .spinner {
-    width: 40px; height: 40px; border: 3px solid var(--border2); border-top-color: var(--accent);
-    border-radius: 50%; animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .error-message {
-    background: rgba(224,92,92,0.15); border: 1px solid rgba(224,92,92,0.4);
-    border-radius: var(--radius); padding: 20px 28px; max-width: 480px; text-align: center;
-    color: var(--red); font-size: 14px;
-  }
-  .error-message button {
-    background: var(--bg3); border: 0.5px solid var(--border2); color: var(--text);
-    padding: 8px 20px; border-radius: var(--radius-sm); cursor: pointer; margin-top: 16px;
-    font-size: 13px;
-  }
-  .error-message button:hover { border-color: var(--accent); color: var(--accent2); }
-
-  /* MAIN APP */
-  #app { display: none; min-height: 100vh; }
-
-  /* TOPBAR */
-  .topbar {
-    position: sticky; top: 0; z-index: 50;
-    background: rgba(15,15,16,0.92); backdrop-filter: blur(12px);
-    border-bottom: 0.5px solid var(--border);
-    padding: 0 24px; height: 52px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .topbar-left { display: flex; align-items: center; gap: 16px; }
-  .topbar-brand { font-size: 13px; font-weight: 600; color: var(--text2); letter-spacing: 0.08em; text-transform: uppercase; }
-  .topbar-sep { width: 1px; height: 18px; background: var(--border2); }
-  .nav-tabs { display: flex; gap: 4px; }
-  .nav-tab {
-    padding: 5px 14px; border-radius: var(--radius-sm); cursor: pointer;
-    font-size: 13px; color: var(--text2); background: none; border: none;
-    transition: all 0.15s;
-  }
-  .nav-tab:hover { color: var(--text); background: var(--bg3); }
-  .nav-tab.active { color: var(--accent2); background: rgba(124,110,224,0.12); }
-  .topbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .btn-commit {
-    background: var(--green); color: #0a1f15; border: none;
-    padding: 7px 16px; border-radius: var(--radius-sm); cursor: pointer;
-    font-size: 13px; font-weight: 600; transition: all 0.2s;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .btn-commit:hover { filter: brightness(1.1); }
-  .btn-commit:disabled { opacity: 0.5; cursor: not-allowed; }
-  .unsaved-dot {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--amber);
-    display: inline-block; margin-right: 2px; animation: pulse-dot 1.6s ease-in-out infinite;
-  }
-  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-  /* PAGES */
-  .page { display: none; padding: 28px 24px; max-width: 1280px; margin: 0 auto; }
-  .page.active { display: block; }
-
-  /* DASHBOARD */
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
-  .kpi-card {
-    background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius);
-    padding: 18px 20px;
-  }
-  .kpi-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
-  .kpi-value { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1; }
-  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
-  .kpi-card.green .kpi-value { color: var(--green); }
-  .kpi-card.red .kpi-value { color: var(--red); }
-  .kpi-card.amber .kpi-value { color: var(--amber); }
-  .kpi-card.blue .kpi-value { color: var(--blue); }
-
-  .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .dash-card {
-    background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 20px;
-  }
-  .dash-card h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); margin-bottom: 16px; }
-  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 0.5px solid var(--border); }
-  .stat-row:last-child { border-bottom: none; }
-  .stat-label { font-size: 13px; color: var(--text2); }
-  .stat-val { font-size: 13px; font-weight: 600; color: var(--text); }
-  .badge {
-    display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
-  }
-  .badge.paid { background: var(--green-bg); color: var(--green); }
-  .badge.budgeted { background: var(--blue-bg); color: var(--blue); }
-  .badge.invoiced { background: var(--amber-bg); color: var(--amber); }
-  .badge.cancelled { background: rgba(100,100,110,0.2); color: var(--text3); }
-  .partner-bar { height: 6px; border-radius: 3px; background: var(--bg3); margin: 4px 0 2px; overflow: hidden; }
-  .partner-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); }
-  .settlement-box {
-    background: rgba(124,110,224,0.08); border: 0.5px solid rgba(124,110,224,0.25);
-    border-radius: var(--radius); padding: 16px 20px; margin-top: 16px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .pl-controls {
-    display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;
-  }
-  .pl-controls label { font-size: 12px; color: var(--text2); }
-  .pl-controls input {
-    background: var(--bg3); border: 0.5px solid var(--border2); color: var(--text);
-    padding: 6px 10px; border-radius: var(--radius-sm); font-size: 12px;
-  }
-  .btn-sm {
-    background: var(--accent); border: none; color: white;
-    padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px;
-  }
-  .pl-table { margin-top: 8px; width: 100%; border-collapse: collapse; }
-  .pl-table th, .pl-table td { padding: 8px 6px; text-align: left; border-bottom: 0.5px solid var(--border); font-size: 12px; }
-  .pl-table th { color: var(--text3); font-weight: 600; }
-
-  /* EXPENSE LOG */
-  .log-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
-  .log-toolbar-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .search-box {
-    background: var(--bg2); border: 0.5px solid var(--border); color: var(--text);
-    padding: 7px 12px; border-radius: var(--radius-sm); font-size: 13px; width: 220px;
-    outline: none;
-  }
-  .search-box:focus { border-color: var(--accent); }
-  .filter-select {
-    background: var(--bg2); border: 0.5px solid var(--border); color: var(--text2);
-    padding: 7px 10px; border-radius: var(--radius-sm); font-size: 13px;
-    outline: none; cursor: pointer;
-  }
-  .btn-add {
-    background: var(--accent); color: white; border: none;
-    padding: 7px 16px; border-radius: var(--radius-sm); cursor: pointer;
-    font-size: 13px; font-weight: 500;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .btn-add:hover { background: var(--accent2); }
-
-  /* TABLE */
-  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 0.5px solid var(--border); }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead th {
-    background: var(--bg2); padding: 10px 12px; text-align: left;
-    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-    color: var(--text3); border-bottom: 0.5px solid var(--border);
-  }
-  tbody tr { border-bottom: 0.5px solid var(--border); transition: background 0.1s; }
-  tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: var(--bg3); }
-  tbody td { padding: 10px 12px; color: var(--text2); vertical-align: middle; }
-  tbody td.primary { color: var(--text); font-weight: 500; }
-  .action-btns { display: flex; gap: 4px; }
-  .btn-icon {
-    background: none; border: 0.5px solid var(--border); color: var(--text3);
-    width: 28px; height: 28px; border-radius: var(--radius-sm); cursor: pointer;
-    display: flex; align-items: center; justify-content: center; font-size: 13px;
-  }
-  .btn-icon:hover { color: var(--text); border-color: var(--border2); }
-  .btn-icon.del:hover { color: var(--red); border-color: var(--red-bg); }
-
-  /* MODAL */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200;
-    display: none; align-items: center; justify-content: center; padding: 20px;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 14px;
-    width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto;
-  }
-  .modal-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 24px; border-bottom: 0.5px solid var(--border);
-  }
-  .modal-header h2 { font-size: 16px; font-weight: 600; }
-  .modal-close { background: none; border: none; color: var(--text3); font-size: 20px; cursor: pointer; }
-  .modal-close:hover { color: var(--text); }
-  .modal-body { padding: 24px; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
-  .form-group.full { grid-column: 1 / -1; }
-  label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); }
-  input, select, textarea {
-    background: var(--bg3); border: 0.5px solid var(--border2); color: var(--text);
-    padding: 9px 12px; border-radius: var(--radius-sm); font-size: 13px;
-    outline: none; width: 100%;
-    font-family: inherit;
-  }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-  textarea { resize: vertical; min-height: 60px; }
-  .modal-footer {
-    padding: 16px 24px; border-top: 0.5px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  }
-  .calc-preview { font-size: 12px; color: var(--text3); }
-  .btn-save {
-    background: var(--accent); color: white; border: none;
-    padding: 9px 24px; border-radius: var(--radius-sm); cursor: pointer;
-    font-size: 13px; font-weight: 600;
-  }
-  .btn-save:hover { background: var(--accent2); }
-  .btn-cancel {
-    background: none; border: 0.5px solid var(--border2); color: var(--text2);
-    padding: 9px 16px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px;
-  }
-
-  /* SETTINGS */
-  .settings-section { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 16px; }
-  .settings-section h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); margin-bottom: 16px; }
-  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--border); gap: 20px; flex-wrap: wrap; }
-  .settings-row:last-child { border-bottom: none; }
-  .settings-row label { font-size: 13px; color: var(--text2); font-weight: 400; text-transform: none; letter-spacing: 0; min-width: 160px; }
-  .settings-row input, .settings-row select { max-width: 220px; }
-  .partner-row { display: grid; grid-template-columns: 70px 1fr 100px 100px; gap: 10px; align-items: center; margin-bottom: 8px; }
-  .partner-id { font-size: 12px; color: var(--text3); font-family: monospace; }
-
-  /* TOAST */
-  #toast {
-    position: fixed; bottom: 24px; right: 24px; z-index: 999;
-    background: var(--bg3); border: 0.5px solid var(--border2);
-    padding: 12px 18px; border-radius: var(--radius); font-size: 13px;
-    color: var(--text); transform: translateY(80px); opacity: 0;
-    transition: all 0.3s ease; pointer-events: none;
-  }
-  #toast.show { transform: none; opacity: 1; }
-  #toast.success { border-color: rgba(63,185,135,0.4); color: var(--green); }
-  #toast.error { border-color: rgba(224,92,92,0.4); color: var(--red); }
-
-  .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
-  @media (max-width: 768px) {
-    .kpi-grid { grid-template-columns: 1fr 1fr; }
-    .dash-grid { grid-template-columns: 1fr; }
-    .form-grid { grid-template-columns: 1fr; }
-    .partner-row { grid-template-columns: 1fr 1fr; gap: 8px; }
-  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #1a1814; overflow: hidden; }
+  #landing { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; background: white; overflow-y: auto; padding: 24px; }
+  .landing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #ccc9c2; max-width: 900px; width: 100%; border-radius: 10px; overflow: hidden; }
+  .opt-card { background: white; padding: 32px; }
+  .drop-zone { border: 1.5px dashed #ccc9c2; border-radius: 6px; padding: 24px; text-align: center; cursor: pointer; background: #f8f7f4; margin-top: 12px; }
+  .btn { display: inline-block; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 13px; font-family: inherit; transition: 0.1s ease; }
+  .btn-primary { background: #1a1814; color: white; }
+  .btn-accent { background: #1d4ed8; color: white; }
+  .btn-ghost { background: transparent; border: 1px solid #ccc9c2; }
+  .btn-danger { background: #dc2626; color: white; }
+  .error-msg { color: #dc2626; background: #fee2e2; padding: 8px; border-radius: 6px; margin-top: 12px; display: none; }
+  #app { display: none; flex-direction: column; height: 100vh; }
+  #app.visible { display: flex; }
+  .app-header, .summary-bar, .table-toolbar { background: white; border-bottom: 1px solid #e0ddd8; padding: 0 24px; display: flex; align-items: center; flex-shrink: 0; }
+  .app-header { height: 52px; gap: 12px; flex-wrap: wrap; }
+  .source-pill { background: #f2f0ec; border-radius: 20px; padding: 4px 12px; font-size: 11px; font-family: monospace; }
+  .header-spacer { flex: 1; }
+  .summary-bar { gap: 0; overflow-x: auto; }
+  .stat-card { padding: 12px 24px; border-right: 1px solid #e0ddd8; min-width: 150px; }
+  .stat-value { font-family: monospace; font-size: 20px; font-weight: 500; }
+  .table-container { flex: 1; overflow: auto; background: #ffffff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1100px; }
+  th { background: #f2f0ec; padding: 10px 12px; text-align: left; position: sticky; top: 0; font-weight: 600; color: #7a7570; border-bottom: 1px solid #e0ddd8; }
+  td { padding: 10px 12px; border-bottom: 1px solid #e0ddd8; white-space: nowrap; }
+  .amount-usd { color: #1d4ed8; font-family: monospace; text-align: right; }
+  .badge { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; }
+  .badge-paid { background: #dcfce7; color: #16a34a; }
+  .badge-pending { background: #fef3c7; color: #b45309; }
+  .action-icons { display: flex; gap: 8px; }
+  .icon-btn { background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px; border-radius: 4px; transition: 0.1s; }
+  .icon-btn:hover { background: #f0efea; }
+  .toast { position: fixed; bottom: 80px; right: 24px; background: #1a1814; color: white; padding: 12px 18px; border-radius: 6px; opacity: 0; transition: 0.2s; pointer-events: none; z-index: 1000; font-size: 13px; }
+  .toast.show { opacity: 1; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 200; }
+  .modal-overlay.visible { display: flex; }
+  .modal { background: white; border-radius: 16px; width: 560px; max-width: 90vw; max-height: 85vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 35px -8px rgba(0,0,0,0.2); }
+  .modal h3 { font-family: 'DM Serif Display'; margin-bottom: 20px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 12px 16px; align-items: center; margin-bottom: 20px; }
+  .form-grid label { font-weight: 500; font-size: 13px; color: #2c2a26; }
+  .form-grid input, .form-grid select, .form-grid datalist { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-family: inherit; }
+  .form-grid input:focus, .form-grid select:focus { outline: none; border-color: #1d4ed8; box-shadow: 0 0 0 2px rgba(29,78,216,0.2); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+  .search-input { padding: 6px 12px; border: 1px solid #e0ddd8; border-radius: 6px; width: 260px; font-family: inherit; }
+  hr { margin: 16px 0; border-color: #e0ddd8; }
 </style>
 </head>
 <body>
 
-<!-- LOAD SCREEN -->
-<div id="load-screen">
-  <div class="load-logo">Kneuralabs</div>
-  <div class="load-title">Expense Tracker</div>
-  <div class="load-sub">Loading ledger from kneuralabs/trax ...</div>
-  <div class="spinner"></div>
-  <div id="load-status" style="font-size:12px; color:var(--text3); margin-top:4px"></div>
+<div id="landing">
+  <h1 style="font-family: 'DM Serif Display';">KneuraTRAX™</h1>
+  <div class="landing-grid">
+    <div class="opt-card">
+      <h3>📁 Local Database</h3>
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".xlsx">
+        <div>📂 Click or drag Excel (.xlsx)</div>
+        <small style="color:#7a7570">Expects 12 columns: ID (Auto), Date, Type, Description, Category, Lifecycle Status, Paid By, Currency, Actual (USD), Split %, Notes / Invoice Ref, Rate Used</small>
+      </div>
+      <button class="btn btn-ghost" id="autoLocalBtn" style="margin-top:16px; width:100%">🔍 Auto‑detect & overwrite database.xlsx from this folder</button>
+      <div class="error-msg" id="localError"></div>
+    </div>
+    <div class="opt-card">
+      <h3>☁️ GitHub</h3>
+      <input type="password" id="ghToken" placeholder="GitHub token (classic)" style="width:100%; margin-bottom:8px; padding:8px;">
+      <input type="text" id="ghRepo" placeholder="owner/repo" style="width:100%; margin-bottom:8px; padding:8px;">
+      <input type="text" id="ghPath" placeholder="path (optional, auto‑discovers database.xlsx)" style="width:100%; margin-bottom:12px; padding:8px;">
+      <button class="btn btn-accent" id="ghLoadBtn" style="width:100%">🔍 Connect & Load</button>
+      <div class="error-msg" id="ghError"></div>
+    </div>
+  </div>
 </div>
 
-<!-- MAIN APP -->
 <div id="app">
-  <div class="topbar">
-    <div class="topbar-left">
-      <span class="topbar-brand">Kneuralabs</span>
-      <div class="topbar-sep"></div>
-      <nav class="nav-tabs">
-        <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
-        <button class="nav-tab" onclick="showPage('expenses')">Expense Log</button>
-        <button class="nav-tab" onclick="showPage('settings')">Settings</button>
-      </nav>
-    </div>
-    <div class="topbar-actions">
-      <div id="source-indicator" style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);padding:0 8px;border-right:0.5px solid var(--border2);margin-right:4px">
-        <span style="color:var(--green)">☁</span> kneuralabs/trax
-      </div>
-      <button class="btn-commit" id="btn-commit" onclick="commitToGitHub()">📤 Commit to Database</button>
-    </div>
+  <div class="app-header">
+    <div style="font-family: 'DM Serif Display';">KneuraTRAX™</div>
+    <div class="source-pill" id="sourceLabel">—</div>
+    <div class="header-spacer"></div>
+    <button class="btn btn-ghost" id="switchBtn" onclick="returnToLanding()">← Switch File</button>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add Transaction</button>
+    <button class="btn btn-primary" onclick="saveExcel()">💾 Save to Excel</button>
+    <button class="btn btn-accent" id="pushGitHubBtn" style="display:none" onclick="pushToGitHub()">⬆ Push to GitHub</button>
   </div>
-
-  <!-- DASHBOARD PAGE -->
-  <div class="page active" id="page-dashboard">
-    <div class="kpi-grid" id="kpi-grid"></div>
-    <div class="dash-grid">
-      <div class="dash-card"><h3>By Lifecycle Status</h3><div id="dash-status"></div></div>
-      <div class="dash-card"><h3>By Category</h3><div id="dash-category"></div></div>
-      <div class="dash-card" style="grid-column:1/-1">
-        <h3>Partner Balance</h3>
-        <div id="dash-partner"></div>
-        <div id="settlement-box"></div>
-      </div>
-      <div class="dash-card" style="grid-column:1/-1">
-        <h3>Profit & Loss Statement (Date Range)</h3>
-        <div class="pl-controls">
-          <label>From:</label><input type="date" id="pl-start">
-          <label>To:</label><input type="date" id="pl-end">
-          <button class="btn-sm" onclick="renderPL()">Update P&L</button>
-          <span style="font-size:11px; color:var(--text3); margin-left:auto;">All amounts in USD</span>
-        </div>
-        <div id="pl-container"></div>
-      </div>
-    </div>
+  <div class="summary-bar">
+    <div class="stat-card"><div>Total Income</div><div class="stat-value" id="statIncome">₹0</div><div id="statIncomeUSD" style="font-size:11px">$0</div></div>
+    <div class="stat-card"><div>Total Expenses</div><div class="stat-value" id="statExpense">₹0</div><div id="statExpenseUSD" style="font-size:11px">$0</div></div>
+    <div class="stat-card"><div>Net Balance</div><div class="stat-value" id="statNet">₹0</div><div id="statNetStatus" style="font-size:11px">—</div></div>
+    <div class="stat-card"><div>Exchange Rate</div><div class="stat-value" id="statRate">₹84</div><div style="font-size:11px">1 USD → INR</div></div>
   </div>
-
-  <!-- EXPENSE LOG PAGE -->
-  <div class="page" id="page-expenses">
-    <div class="log-toolbar">
-      <div class="log-toolbar-left">
-        <input class="search-box" type="text" placeholder="Search expenses..." id="search-input" oninput="renderTable()">
-        <select class="filter-select" id="filter-status" onchange="renderTable()"><option value="">All Statuses</option></select>
-        <select class="filter-select" id="filter-category" onchange="renderTable()"><option value="">All Categories</option></select>
-      </div>
-      <button class="btn-add" onclick="openModal()">+ Add Expense</button>
+  <div class="table-container">
+    <div class="table-toolbar" style="justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid #e0ddd8;">
+      <div><input type="text" id="searchBox" placeholder="🔍 Search any field…" oninput="filterTable()" class="search-input"></div>
+      <div><span style="font-size:12px; color:#5b554e;">✏️ Click ✎ to edit any row via form</span></div>
     </div>
-    <div class="table-wrap">
-      <table id="expense-table">
-        <thead><tr><th>ID</th><th>Date</th><th>Description</th><th>Category</th><th>Status</th><th>Paid By</th><th>Budget (USD)</th><th>Actual (USD)</th><th>Variance</th><th>Notes</th><th></th></tr></thead>
-        <tbody id="table-body"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- SETTINGS PAGE -->
-  <div class="page" id="page-settings">
-    <div class="settings-section"><h3>Exchange Rate</h3><div class="settings-row"><label>USD → INR Rate</label><input type="number" id="s-rate" value="84" step="0.01"></div></div>
-    <div class="settings-section"><h3>Partners</h3><div id="partners-settings"></div></div>
-    <div class="settings-section"><h3>Expense Categories</h3><div id="categories-settings"></div><button class="btn-ghost" style="margin-top:12px" onclick="addCategory()">+ Add Category</button></div>
-    <div class="settings-section"><h3>Lifecycle Stages</h3><div id="stages-settings"></div></div>
-    <div style="margin-top:16px"><button class="btn-save" onclick="saveSettings()">Save Settings</button></div>
+    <div id="tableWrapper"></div>
   </div>
 </div>
+<div class="toast" id="toast"></div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modal"><div class="modal"><div class="modal-header"><h2 id="modal-title">Add Expense</h2><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body"><div class="form-grid"><div class="form-group"><label>Date</label><input type="date" id="f-date"></div><div class="form-group"><label>Lifecycle Status</label><select id="f-status"></select></div><div class="form-group full"><label>Description</label><input type="text" id="f-desc" placeholder="e.g. Legal Fees"></div><div class="form-group"><label>Category</label><select id="f-category"></select></div><div class="form-group"><label>Paid By</label><select id="f-paidby"></select></div><div class="form-group"><label>Budgeted Amount</label><input type="number" id="f-budget-amt" placeholder="0.00" step="0.01" oninput="updateCalc()"></div><div class="form-group"><label>Budget Currency</label><select id="f-budget-cur" onchange="updateCalc()"><option value="INR">INR</option><option value="USD">USD</option></select></div><div class="form-group"><label>Actual Paid</label><input type="number" id="f-actual-amt" placeholder="0.00" step="0.01" oninput="updateCalc()"></div><div class="form-group"><label>Actual Currency</label><select id="f-actual-cur" onchange="updateCalc()"><option value="INR">INR</option><option value="USD">USD</option></select></div><div class="form-group"><label>Split % (First Partner)</label><input type="number" id="f-split" value="50" min="0" max="100" oninput="updateCalc()"></div><div class="form-group full"><label>Notes / Invoice Ref</label><textarea id="f-notes" placeholder="Optional"></textarea></div></div></div><div class="modal-footer"><div class="calc-preview" id="calc-preview">—</div><div><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="saveExpense()">Save Expense</button></div></div></div></div>
-
-<div id="toast"></div>
+<!-- Modal for Add / Edit Transaction (full form, dropdowns with free text) -->
+<div class="modal-overlay" id="formModal">
+  <div class="modal">
+    <h3 id="modalTitle">➕ Transaction</h3>
+    <div class="form-grid" id="transactionForm">
+      <!-- dynamic fields injected via JS -->
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modalSaveBtn">Save Transaction</button>
+    </div>
+  </div>
+</div>
 
 <script>
-// ==================== HARDCODED GITHUB TOKEN (never prompts again) ====================
-const GITHUB_TOKEN = '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';
+// ======================== COLUMN DEFINITION ========================
+const EXCEL_COLUMNS = [
+  "ID (Auto)", "Date", "Type", "Description", "Category", "Lifecycle Status",
+  "Paid By", "Currency", "Actual (USD)", "Split %", "Notes / Invoice Ref", "Rate Used"
+];
 
-const GITHUB_OWNER = 'kneuralabs';
-const GITHUB_REPO = 'trax';
-const GITHUB_PATH = 'expense.xlsx';
-const GITHUB_BRANCH = 'main';
-const GITHUB_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_PATH}`;
-
-// Application State
+// Global state
 let state = {
-  expenses: [],
-  settings: { rate: 84, partners: [{ id: 'P1', name: 'Piyal', currency: 'INR', split: 50 }, { id: 'P2', name: 'Gautham', currency: 'USD', split: 50 }], categories: ['Software / Tools', 'Marketing', 'Legal / Admin', 'Travel & Refreshments', 'Miscellaneous'], stages: ['Budgeted', 'Invoiced', 'Paid', 'Cancelled'] },
-  editingIndex: null
+  source: 'local', fileName: 'database.xlsx', rateData: 84,
+  transactions: [],
+  searchQuery: '',
+  github: { token: '', repo: '', path: '', sha: '' },
+  localFileHandle: null,
+  currentEditId: null   // null = add mode, else id of editing transaction
 };
-let hasUnsavedChanges = false;
-function markUnsaved() { if (!hasUnsavedChanges) { hasUnsavedChanges = true; } }
-function clearUnsaved() { hasUnsavedChanges = false; }
 
-// ==================== ID MANAGEMENT ====================
-function assignIds() {
-  let maxId = 0;
-  for (let e of state.expenses) if (e.id && typeof e.id === 'number' && e.id > maxId) maxId = e.id;
-  let nextId = maxId + 1;
-  for (let e of state.expenses) if (!e.id) { e.id = nextId; nextId++; }
-}
-function getNextId() {
-  let max = 0;
-  for (let e of state.expenses) if (e.id && e.id > max) max = e.id;
-  return max + 1;
-}
+// ---------- helpers ----------
+function fmtINR(v) { let n = parseFloat(v); return isNaN(n) ? '—' : '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2 }); }
+function fmtUSD(v) { let n = parseFloat(v); return isNaN(n) ? '—' : '$' + n.toFixed(2); }
+function showToast(msg) { let t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+function showError(id, msg) { let e = document.getElementById(id); e.textContent = msg; e.style.display = 'block'; }
+function clearError(id) { let e = document.getElementById(id); if(e) e.style.display = 'none'; }
+function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ==================== FETCH & PARSE ====================
-async function fetchFromGitHub() {
-  const loadStatus = document.getElementById('load-status');
-  try {
-    if (loadStatus) loadStatus.textContent = 'Fetching expense.xlsx...';
-    const res = await fetch(GITHUB_RAW_URL + '?t=' + Date.now());
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const buffer = await res.arrayBuffer();
-    const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
-    parseWorkbook(wb);
-    launchApp();
-  } catch (err) {
-    document.getElementById('load-screen').innerHTML = `<div class="error-message"><strong>⚠️ Could not load expense.xlsx</strong><br><button onclick="location.reload()">↻ Retry</button></div>`;
+function isExpenseType(typeStr) { return String(typeStr).toLowerCase().includes('expense'); }
+
+// recompute INR + shares based on rate, amountUSD, split
+function recomputeTransaction(txn) {
+  let rate = parseFloat(txn.rate);
+  if (isNaN(rate)) rate = state.rateData;
+  let usd = parseFloat(txn.amountUSD);
+  if (isNaN(usd)) usd = 0;
+  txn.amountINR = +(usd * rate).toFixed(2);
+  if (isExpenseType(txn.type)) {
+    let split = parseFloat(txn.splitPct);
+    if (isNaN(split)) split = 50;
+    txn.splitPct = split;
+    txn.piyalShare = +(txn.amountINR * split / 100).toFixed(2);
+    txn.gauthamShare = +(txn.amountINR * (100 - split) / 100).toFixed(2);
+  } else {
+    txn.piyalShare = 0;
+    txn.gauthamShare = 0;
   }
+  txn.rate = rate;
+  return txn;
 }
 
+// parse workbook into unified transactions
 function parseWorkbook(wb) {
-  const settingsSheet = wb.Sheets['⚙️ Settings'] || wb.Sheets[wb.SheetNames[0]];
-  if (settingsSheet) {
-    const raw = XLSX.utils.sheet_to_json(settingsSheet, { header: 1, defval: '' });
-    if (raw[5] && raw[5][2] !== '') state.settings.rate = Number(raw[5][2]) || 84;
-    let partners = [];
-    for (let r = 10; r <= 20; r++) { if (!raw[r]) break; const id = String(raw[r][1] || '').trim(); const name = String(raw[r][2] || '').trim(); const cur = String(raw[r][3] || 'INR').trim(); const split = Number(raw[r][4]) || 50; if (id && name && id.match(/^P\d+$/)) partners.push({ id, name, currency: cur, split }); }
-    if (partners.length) state.settings.partners = partners;
-    let cats = []; for (let r = 15; r <= 35; r++) { if (!raw[r]) break; const cat = String(raw[r][2] || '').trim(); if (cat && !cat.startsWith('📅') && !cat.startsWith('🏷️')) cats.push(cat); } if (cats.length) state.settings.categories = cats;
-    let stages = []; for (let r = 23; r <= 32; r++) { if (!raw[r]) break; const st = String(raw[r][2] || '').trim(); if (st) stages.push(st); } if (stages.length) state.settings.stages = stages;
-  }
-  const expSheet = wb.Sheets['📋 Expense Log'] || wb.Sheets[wb.SheetNames[1]];
-  if (expSheet) {
-    const raw = XLSX.utils.sheet_to_json(expSheet, { header: 1, defval: '', cellDates: true });
-    state.expenses = [];
-    for (let r = 5; r < raw.length; r++) {
-      const row = raw[r];
-      if (!row || !row[0] || row[0] === '' || isNaN(Number(row[0]))) continue;
-      let dateVal = row[1], dateStr = '';
-      if (dateVal instanceof Date) dateStr = dateVal.toISOString().slice(0,10);
-      else if (typeof dateVal === 'string') dateStr = dateVal.slice(0,10);
-      else if (typeof dateVal === 'number') { const d = XLSX.SSF.parse_date_code(dateVal); if (d) dateStr = `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`; }
-      let expenseId = Number(row[20]) || 0;
-      state.expenses.push({ 
-        id: expenseId,
-        date: dateStr, description: String(row[2] || '').trim(), category: String(row[3] || '').trim(), 
-        status: String(row[4] || '').trim(), paidBy: String(row[5] || '').trim(), 
-        budgetAmt: Number(row[6]) || 0, budgetCur: String(row[7] || 'INR').trim(), 
-        actualAmt: Number(row[10]) || 0, actualCur: String(row[11] || 'INR').trim(), 
-        split: Number(row[14]) || 50, notes: String(row[17] || '').trim(), 
-        rate: Number(row[19]) || state.settings.rate 
-      });
+  if (wb.SheetNames.includes('Rates')) {
+    let rSheet = wb.Sheets['Rates'];
+    let rows = XLSX.utils.sheet_to_json(rSheet, { header: 1, defval: '' });
+    for (let row of rows) {
+      let v = row[1];
+      let n = typeof v === 'number' ? v : parseFloat(String(v));
+      if (!isNaN(n) && n > 0) { state.rateData = n; break; }
     }
-    assignIds();
   }
-}
 
-function launchApp() {
-  document.getElementById('load-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  populateFilters(); populateSettings(); renderDashboard(); renderTable(); renderPL();
-}
-
-// ==================== COMMIT TO GITHUB (uses hardcoded token, no prompts) ====================
-async function commitToGitHub() {
-  if (!hasUnsavedChanges && state.expenses.length > 0) { showToast('No changes to commit', 'success'); return; }
-  
-  const commitBtn = document.getElementById('btn-commit');
-  const originalHTML = commitBtn.innerHTML;
-  commitBtn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;margin-right:6px;"></span> Committing...';
-  commitBtn.disabled = true;
-  
-  try {
-    const wb = generateWorkbook();
-    const excelBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
-    const base64Content = btoa(String.fromCharCode(...new Uint8Array(excelBuffer)));
-    
-    // Get current SHA
-    const shaRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`, {
-      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
-    });
-    let sha = null;
-    if (shaRes.ok) { const data = await shaRes.json(); sha = data.sha; }
-    
-    // Commit
-    const commitRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/vnd.github.v3+json'
-      },
-      body: JSON.stringify({
-        message: `Update expense tracker - ${new Date().toLocaleString()}`,
-        content: base64Content,
-        sha: sha,
-        branch: GITHUB_BRANCH
-      })
-    });
-    
-    if (!commitRes.ok) {
-      const errorData = await commitRes.json();
-      throw new Error(errorData.message || `HTTP ${commitRes.status}`);
+  let ledgerSheet = null;
+  for (let sheetName of wb.SheetNames) {
+    let ws = wb.Sheets[sheetName];
+    let headers = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', sheetRows: 1 })[0];
+    if (!headers) continue;
+    let headerStrings = headers.map(h => String(h || '').replace(/\s+/g, ' ').trim());
+    let hasID = headerStrings.some(h => h.includes('ID') && h.includes('Auto'));
+    let hasDate = headerStrings.includes('Date');
+    let hasType = headerStrings.includes('Type');
+    let hasDesc = headerStrings.includes('Description');
+    let hasActualUSD = headerStrings.some(h => h.includes('Actual') && h.includes('USD'));
+    if (hasID && hasDate && hasType && hasDesc && hasActualUSD) {
+      ledgerSheet = ws;
+      break;
     }
-    
-    showToast('✅ Successfully committed to GitHub!', 'success');
-    clearUnsaved();
-  } catch (err) {
-    console.error(err);
-    let errorMsg = err.message;
-    if (errorMsg.includes('Bad credentials')) errorMsg = 'Invalid token. Please update the hardcoded token.';
-    else if (errorMsg.includes('sha')) errorMsg = 'File SHA mismatch. Refresh and try again.';
-    showToast(`Commit failed: ${errorMsg}`, 'error');
-  } finally {
-    commitBtn.innerHTML = originalHTML;
-    commitBtn.disabled = false;
   }
+  if (!ledgerSheet) { state.transactions = []; return; }
+
+  let rows = XLSX.utils.sheet_to_json(ledgerSheet, { header: 1, defval: '', raw: false });
+  if (rows.length < 2) { state.transactions = []; return; }
+
+  let headers = rows[0].map(h => String(h || '').replace(/\s+/g, ' ').trim());
+  let colIdx = {};
+  for (let col of EXCEL_COLUMNS) {
+    let norm = col.replace(/\s+/g, ' ').trim();
+    let idx = headers.findIndex(h => h === norm);
+    if (idx === -1) idx = headers.findIndex(h => h.replace(/[^a-z0-9]/gi,'') === norm.replace(/[^a-z0-9]/gi,''));
+    colIdx[col] = idx;
+  }
+
+  let transactions = [];
+  for (let i = 1; i < rows.length; i++) {
+    let row = rows[i];
+    let get = (col) => colIdx[col] !== undefined && colIdx[col] >= 0 ? String(row[colIdx[col]] || '').trim() : '';
+    let typeRaw = get("Type");
+    if (!typeRaw) continue;
+    let txn = {
+      id: parseInt(get("ID (Auto)")) || 0,
+      date: get("Date") || "",
+      type: typeRaw,
+      desc: get("Description") || "",
+      category: get("Category") || "",
+      status: get("Lifecycle Status") || "",
+      paidBy: get("Paid By") || "",
+      currency: get("Currency") || "USD",
+      amountUSD: parseFloat(get("Actual (USD)")) || 0,
+      splitPct: parseFloat(get("Split %")) || 50,
+      notes: get("Notes / Invoice Ref") || "",
+      rate: parseFloat(get("Rate Used")) || state.rateData
+    };
+    recomputeTransaction(txn);
+    transactions.push(txn);
+  }
+  transactions.forEach((t, idx) => t.id = idx + 1);
+  state.transactions = transactions;
 }
 
-function generateWorkbook() {
-  const wb = XLSX.utils.book_new(); const rate = state.settings.rate; const partners = state.settings.partners;
-  const p1 = partners[0] || { name: 'P1' }, p2 = partners[1] || { name: 'P2' };
-  const settingsData = [[], ['', '⚙️ Kneuralabs Settings'], [], ['', '💱 Exchange Rate'], ['', 'USD→INR', rate], [], [], ['', '👥 Partners'], ['', 'ID', 'Name', 'Currency', 'Split %'], ...partners.map(p => ['', p.id, p.name, p.currency, p.split]), [], [], ['', '🏷️ Categories'], ...state.settings.categories.map(c => ['', '', c]), [], [], ['', '🔄 Stages'], ...state.settings.stages.map(s => ['', '', s])];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(settingsData), '⚙️ Settings');
-  const headers = ['#', 'Date', 'Description', 'Category', 'Lifecycle Status', 'Paid By', 'Budgeted Amount', 'Budget Currency', 'Budgeted INR', 'Budgeted USD', 'Actual Paid', 'Actual Currency', 'Actual INR', 'Actual USD', `${p1.name} Split %`, `${p1.name} Share INR`, `${p2.name} Share INR`, 'Variance INR', 'Notes', 'Rate Used', 'Expense ID'];
-  const expRows = state.expenses.map((e, i) => {
-    const budINR = e.budgetCur === 'USD' ? e.budgetAmt * rate : e.budgetAmt; const budUSD = e.budgetCur === 'INR' ? e.budgetAmt / rate : e.budgetAmt;
-    const actINR = e.actualCur === 'USD' ? e.actualAmt * rate : e.actualAmt; const actUSD = e.actualCur === 'INR' ? e.actualAmt / rate : e.actualAmt;
-    return [i+1, e.date, e.description, e.category, e.status, e.paidBy, e.budgetAmt||0, e.budgetCur, budINR, budUSD, e.actualAmt||0, e.actualCur, actINR, actUSD, e.split, actINR*(e.split/100), actINR*(1-e.split/100), actINR-budINR, e.notes||'', rate, e.id || 0];
-  });
-  const logData = [[], ['📋 Kneuralabs Expense Log'], [], headers, ...expRows];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(logData), '📋 Expense Log');
+// Build workbook for export
+function buildWorkbook() {
+  let wb = XLSX.utils.book_new();
+  let rows = [EXCEL_COLUMNS];
+  for (let t of state.transactions) {
+    rows.push([
+      t.id, t.date, t.type, t.desc, t.category, t.status,
+      t.paidBy, t.currency, t.amountUSD, t.splitPct, t.notes, t.rate
+    ]);
+  }
+  let ledgerSheet = XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ledgerSheet, "Ledger");
+  let ratesSheet = XLSX.utils.aoa_to_sheet([["Live Rate", state.rateData], ["Fallback", 84]]);
+  XLSX.utils.book_append_sheet(wb, ratesSheet, "Rates");
   return wb;
 }
 
-// ==================== UI HELPERS ====================
-function toINR(amt,cur) { return cur === 'USD' ? amt * state.settings.rate : amt; }
-function toUSD(amt,cur) { return cur === 'INR' ? amt / state.settings.rate : amt; }
-function fmtUSD(n) { return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+// ---------- Local file & GitHub (same as before but simplified) ----------
+function processFile(file) {
+  clearError('localError');
+  if (!file.name.match(/\.xlsx$/i)) { showError('localError', 'Need .xlsx file'); return; }
+  let reader = new FileReader();
+  reader.onload = e => {
+    try {
+      let wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      parseWorkbook(wb);
+      state.source = 'local';
+      state.fileName = file.name;
+      state.localFileHandle = null;
+      document.getElementById('sourceLabel').innerText = file.name;
+      document.getElementById('pushGitHubBtn').style.display = 'none';
+      launchApp();
+      showToast(`✅ Loaded "${file.name}" — edit via form`);
+    } catch(err) { showError('localError', 'Parse error: ' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+document.getElementById('fileInput').onchange = e => processFile(e.target.files[0]);
+let dropZone = document.getElementById('dropZone');
+dropZone.ondragover = e => e.preventDefault();
+dropZone.ondrop = e => { e.preventDefault(); processFile(e.dataTransfer.files[0]); };
 
-function renderDashboard() {
-  const exps = state.expenses, rate = state.settings.rate, partners = state.settings.partners;
-  const p1 = partners[0], p2 = partners[1];
-  const totalBudgeted = exps.reduce((s,e) => s + toUSD(toINR(e.budgetAmt, e.budgetCur), 'INR'), 0);
-  const totalActual = exps.reduce((s,e) => s + toUSD(toINR(e.actualAmt, e.actualCur), 'INR'), 0);
-  const p1Paid = exps.filter(e => e.paidBy === p1?.name).reduce((s,e) => s + toUSD(toINR(e.actualAmt, e.actualCur), 'INR'), 0);
-  const p2Paid = exps.filter(e => e.paidBy === p2?.name).reduce((s,e) => s + toUSD(toINR(e.actualAmt, e.actualCur), 'INR'), 0);
-  const totalPaid = p1Paid + p2Paid, fairShare = totalPaid / 2, p1Diff = p1Paid - fairShare;
-  document.getElementById('kpi-grid').innerHTML = `
-    <div class="kpi-card"><div class="kpi-label">Total Budgeted</div><div class="kpi-value">${fmtUSD(totalBudgeted)}</div><div class="kpi-sub">${exps.length} expenses</div></div>
-    <div class="kpi-card green"><div class="kpi-label">Total Actual Paid</div><div class="kpi-value">${fmtUSD(totalActual)}</div><div class="kpi-sub">${exps.filter(e=>e.status==='Paid').length} paid</div></div>
-    <div class="kpi-card ${totalActual-totalBudgeted<0?'green':'red'}"><div class="kpi-label">Variance (USD)</div><div class="kpi-value">${totalActual-totalBudgeted<0?'-':'+'}${fmtUSD(Math.abs(totalActual-totalBudgeted))}</div><div class="kpi-sub">${totalActual-totalBudgeted<0?'Under budget ✓':'Over budget ⚠'}</div></div>
-    <div class="kpi-card blue"><div class="kpi-label">Exchange Rate</div><div class="kpi-value">₹${rate}</div><div class="kpi-sub">Per USD</div></div>`;
-  const statusMap = [...new Set(exps.map(e=>e.status).filter(Boolean))];
-  document.getElementById('dash-status').innerHTML = statusMap.map(s => { const rows = exps.filter(e => e.status === s); const act = rows.reduce((sum,e) => sum + toUSD(toINR(e.actualAmt, e.actualCur), 'INR'), 0); return `<div class="stat-row"><span class="stat-label"><span class="badge ${s.toLowerCase()}">${s}</span></span><span class="stat-val">${rows.length} · ${fmtUSD(act)} paid</span></div>`; }).join('') || '<div class="empty-state"><p>No expenses</p></div>';
-  const catMap = [...new Set(exps.map(e=>e.category).filter(Boolean))];
-  document.getElementById('dash-category').innerHTML = catMap.map(c => { const rows = exps.filter(e => e.category === c); const act = rows.reduce((sum,e) => sum + toUSD(toINR(e.actualAmt, e.actualCur), 'INR'), 0); return `<div class="stat-row"><span class="stat-label">${c}</span><span class="stat-val">${fmtUSD(act)}</span></div>`; }).join('') || '<div class="empty-state"><p>No expenses</p></div>';
-  document.getElementById('dash-partner').innerHTML = partners.map((p,i) => { const paid = i === 0 ? p1Paid : p2Paid; const diff = paid - fairShare; const pct = totalPaid > 0 ? (paid / totalPaid * 100) : 50; return `<div class="stat-row"><span class="stat-label">${p.name}</span><div style="flex:1;margin:0 16px"><div class="partner-bar"><div class="partner-bar-fill" style="width:${Math.min(pct,100)}%;background:${i===0?'var(--accent)':'var(--green)'}"></div></div><div style="font-size:11px">${pct.toFixed(1)}% of total paid</div></div><span class="stat-val" style="color:${diff>0?'var(--green)':diff<0?'var(--red)':'var(--text)'}">${fmtUSD(paid)}</span></div>`; }).join('');
-  let settlementMsg = '';
-  if (Math.abs(p1Diff) > 0.01) {
-    const payer = p1Diff < 0 ? p1?.name : p2?.name;
-    const receiver = p1Diff < 0 ? p2?.name : p1?.name;
-    settlementMsg = `<div class="settlement-box"><div><div class="settlement-label">⚖️ Settlement</div><div class="settlement-desc">${payer} pays ${receiver}</div></div><div class="settlement-amount">${fmtUSD(Math.abs(p1Diff))}</div></div>`;
-  } else { settlementMsg = `<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">✓ Partners are balanced</div>`; }
-  document.getElementById('settlement-box').innerHTML = settlementMsg;
+document.getElementById('autoLocalBtn').onclick = async () => {
+  if (!window.showDirectoryPicker) { showToast("Folder picker not supported"); return; }
+  try {
+    let dirHandle = await window.showDirectoryPicker();
+    let fileHandle = await dirHandle.getFileHandle('database.xlsx', { create: false });
+    let file = await fileHandle.getFile();
+    let buffer = await file.arrayBuffer();
+    let wb = XLSX.read(buffer, { type: 'array', cellDates: true });
+    parseWorkbook(wb);
+    state.source = 'local';
+    state.fileName = 'database.xlsx';
+    state.localFileHandle = fileHandle;
+    document.getElementById('sourceLabel').innerHTML = '📁 database.xlsx (auto‑overwrite)';
+    document.getElementById('pushGitHubBtn').style.display = 'none';
+    launchApp();
+    showToast('Loaded database.xlsx – Save will overwrite original');
+  } catch(e) { showError('localError', 'No database.xlsx found: ' + e.message); }
+};
+
+async function discoverDatabaseInRepo(token, repo) {
+  let url = `https://api.github.com/repos/${repo}/contents/`;
+  let res = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+  if (!res.ok) throw new Error(`Cannot list repo: ${res.status}`);
+  let files = await res.json();
+  let found = files.find(f => f.type === 'file' && f.name.toLowerCase() === 'database.xlsx');
+  if (found) return found.path;
+  for (let dir of files.filter(f => f.type === 'dir')) {
+    let dirRes = await fetch(`https://api.github.com/repos/${repo}/contents/${dir.path}`, { headers: { 'Authorization': `token ${token}` } });
+    if (dirRes.ok) {
+      let items = await dirRes.json();
+      let item = items.find(i => i.type === 'file' && i.name.toLowerCase() === 'database.xlsx');
+      if (item) return item.path;
+    }
+  }
+  return null;
+}
+async function handleGitHubLoad() {
+  clearError('ghError');
+  let token = document.getElementById('ghToken').value.trim();
+  let repo = document.getElementById('ghRepo').value.trim();
+  let path = document.getElementById('ghPath').value.trim();
+  if (!token || !repo.includes('/')) { showError('ghError', 'Token and repo (owner/repo) required'); return; }
+  let btn = document.getElementById('ghLoadBtn');
+  btn.disabled = true; btn.innerText = 'Searching...';
+  try {
+    if (!path) {
+      path = await discoverDatabaseInRepo(token, repo);
+      if (!path) throw new Error('database.xlsx not found');
+      document.getElementById('ghPath').value = path;
+    }
+    let url = `https://api.github.com/repos/${repo}/contents/${path}`;
+    let res = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+    if (!res.ok) throw new Error(`File not found (${res.status})`);
+    let data = await res.json();
+    let binary = atob(data.content.replace(/\n/g, ''));
+    let buf = new ArrayBuffer(binary.length);
+    let view = new Uint8Array(buf);
+    for (let i = 0; i < binary.length; i++) view[i] = binary.charCodeAt(i);
+    let wb = XLSX.read(buf, { type: 'array', cellDates: true });
+    parseWorkbook(wb);
+    state.source = 'github';
+    state.github = { token, repo, path, sha: data.sha };
+    state.fileName = path.split('/').pop();
+    document.getElementById('sourceLabel').innerText = `GitHub: ${repo}/${path}`;
+    document.getElementById('pushGitHubBtn').style.display = 'flex';
+    launchApp();
+    showToast('Loaded from GitHub — edit via form');
+  } catch(e) { showError('ghError', e.message); }
+  finally { btn.disabled = false; btn.innerText = '🔍 Connect & Load'; }
+}
+document.getElementById('ghLoadBtn').onclick = handleGitHubClick;
+function handleGitHubClick() { handleGitHubLoad(); }
+
+// ---------- UI Rendering ----------
+function launchApp() {
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  updateStats();
+  renderTable();
 }
 
-function renderPL() {
-  let startDate = document.getElementById('pl-start').value;
-  let endDate = document.getElementById('pl-end').value;
-  let filtered = [...state.expenses];
-  if (startDate) filtered = filtered.filter(e => e.date >= startDate);
-  if (endDate) filtered = filtered.filter(e => e.date <= endDate);
-  if (filtered.length === 0) { document.getElementById('pl-container').innerHTML = '<div class="empty-state">No expenses in selected range.</div>'; return; }
-  const totalBudget = filtered.reduce((s,e) => s + toUSD(toINR(e.budgetAmt, e.budgetCur), 'INR'), 0);
-  const totalActual = filtered.reduce((s,e) => s + toUSD(toINR(e.actualAmt, e.actualCur), 'INR'), 0);
-  const variance = totalActual - totalBudget;
-  const byCategory = {};
-  filtered.forEach(e => { const cat = e.category || 'Uncategorized'; const usd = toUSD(toINR(e.actualAmt, e.actualCur), 'INR'); byCategory[cat] = (byCategory[cat] || 0) + usd; });
-  let catRows = Object.entries(byCategory).sort((a,b) => b[1] - a[1]).map(([cat, amt]) => `<tr><td>${cat}</td><td>${fmtUSD(amt)}</td></tr>`).join('');
-  let html = `<table class="pl-table"><thead><tr><th>Metric</th><th>Amount (USD)</th></tr></thead><tbody>
-    <tr><td>Total Budgeted</td><td>${fmtUSD(totalBudget)}</td></tr>
-    <tr><td>Total Actual</td><td>${fmtUSD(totalActual)}</td></tr>
-    <tr><td>Variance</td><td style="color:${variance<0?'var(--green)':'var(--red)'}">${variance<0?'-':'+'}${fmtUSD(Math.abs(variance))}</td></tr>
-    <tr><td colspan="2"><strong>By Category (Actual)</strong></td></tr>${catRows}
-  </tbody></table>`;
-  document.getElementById('pl-container').innerHTML = html;
+function returnToLanding() {
+  if (confirm('Exit to file selector? Unsaved changes will be lost if not saved.')) {
+    document.getElementById('app').classList.remove('visible');
+    document.getElementById('landing').style.display = 'flex';
+    state.localFileHandle = null;
+  }
+}
+
+function updateStats() {
+  let rate = state.rateData;
+  document.getElementById('statRate').innerHTML = `₹${rate}`;
+  let totalIncUSD = 0, totalExpUSD = 0;
+  for (let t of state.transactions) {
+    let amt = parseFloat(t.amountUSD) || 0;
+    if (isExpenseType(t.type)) totalExpUSD += amt;
+    else totalIncUSD += amt;
+  }
+  let totalIncINR = totalIncUSD * rate;
+  let totalExpINR = totalExpUSD * rate;
+  let netINR = totalIncINR - totalExpINR;
+  document.getElementById('statExpense').innerText = fmtINR(totalExpINR);
+  document.getElementById('statExpenseUSD').innerText = fmtUSD(totalExpUSD);
+  document.getElementById('statIncome').innerText = fmtINR(totalIncINR);
+  document.getElementById('statIncomeUSD').innerText = fmtUSD(totalIncUSD);
+  document.getElementById('statNet').innerText = fmtINR(netINR);
+  document.getElementById('statNetStatus').innerText = netINR >= 0 ? '▲ Surplus' : '▼ Deficit';
+}
+
+function getFilteredTransactions() {
+  let q = state.searchQuery.toLowerCase();
+  if (!q) return state.transactions.map((t, idx) => ({ ...t, _idx: idx }));
+  return state.transactions.map((t, idx) => ({ ...t, _idx: idx })).filter(t =>
+    Object.values(t).some(v => String(v).toLowerCase().includes(q))
+  );
 }
 
 function renderTable() {
-  const search = document.getElementById('search-input').value.toLowerCase();
-  const statusFilter = document.getElementById('filter-status').value;
-  const catFilter = document.getElementById('filter-category').value;
-  let filtered = state.expenses.filter(e => { if (search && !e.description.toLowerCase().includes(search) && !e.category.toLowerCase().includes(search) && !e.paidBy.toLowerCase().includes(search)) return false; if (statusFilter && e.status !== statusFilter) return false; if (catFilter && e.category !== catFilter) return false; return true; });
-  const tbody = document.getElementById('table-body');
-  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state">No expenses found</div>NonNullListCellRenderer</td>'; return; }
-  tbody.innerHTML = filtered.map((e, fi) => { const realIdx = state.expenses.indexOf(e); const budgetUSD = toUSD(toINR(e.budgetAmt, e.budgetCur), 'INR'); const actualUSD = toUSD(toINR(e.actualAmt, e.actualCur), 'INR'); const variance = actualUSD - budgetUSD; const varColor = variance < 0 ? 'var(--green)' : variance > 0 ? 'var(--red)' : 'var(--text2)'; return `<tr><td class="primary">EXP-${e.id || '?'}</td><td>${e.date || '—'}</td><td class="primary">${e.description || '—'}</td><td>${e.category || '—'}</td><td><span class="badge ${(e.status||'').toLowerCase()}">${e.status || '—'}</span></td><td>${e.paidBy || '—'}</td><td>${e.budgetAmt ? fmtUSD(budgetUSD) : '—'}</td><td>${e.actualAmt ? fmtUSD(actualUSD) : '—'}</td><td style="color:${varColor}">${e.budgetAmt||e.actualAmt ? (variance!==0 ? (variance<0?'-':'+')+fmtUSD(Math.abs(variance)) : '$0.00') : '—'}</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis">${e.notes || '—'}</td><td><div class="action-btns"><button class="btn-icon" onclick="openModal(${realIdx})">✎</button><button class="btn-icon del" onclick="deleteExpense(${realIdx})">✕</button></div></td></tr>`; }).join('');
+  const columns = [
+    { key: 'id', label: 'ID' }, { key: 'date', label: 'Date' }, { key: 'type', label: 'Type' },
+    { key: 'desc', label: 'Description' }, { key: 'category', label: 'Category' },
+    { key: 'status', label: 'Status' }, { key: 'paidBy', label: 'Paid By' },
+    { key: 'currency', label: 'Currency' }, { key: 'amountUSD', label: 'Actual (USD)' },
+    { key: 'splitPct', label: 'Split %' }, { key: 'notes', label: 'Notes' }, { key: 'rate', label: 'Rate' }
+  ];
+  let filtered = getFilteredTransactions();
+  let wrapper = document.getElementById('tableWrapper');
+  if (filtered.length === 0) { wrapper.innerHTML = '<div style="padding:40px; text-align:center; color:#7a7570;">✨ No transactions. Click + Add Transaction.</div>'; return; }
+  let html = `<thead><tr><th style="width:60px">Actions</th>${columns.map(c => `<th>${c.label}</th>`).join('')}</tr></thead><tbody>`;
+  for (let row of filtered) {
+    let isExp = isExpenseType(row.type);
+    html += `<tr>`;
+    html += `<td class="action-icons">
+              <button class="icon-btn" onclick="openEditModal(${row.id})" title="Edit">✎</button>
+              <button class="icon-btn" onclick="deleteTransaction(${row.id})" title="Delete">🗑️</button>
+            </td>`;
+    for (let col of columns) {
+      let val = row[col.key];
+      if (col.key === 'amountUSD') html += `<td class="amount-usd">${fmtUSD(val)}</td>`;
+      else if (col.key === 'status' && isExp) {
+        let cls = (val === 'Paid' ? 'badge-paid' : (val === 'Pending' ? 'badge-pending' : ''));
+        html += `<td><span class="badge ${cls}">${esc(val)}</span></td>`;
+      } else if (col.key === 'splitPct' && !isExp) html += `<td>—</td>`;
+      else html += `<td>${esc(val)}</td>`;
+    }
+    html += `</tr>`;
+  }
+  html += `</tbody>`;
+  wrapper.innerHTML = `<table>${html}</table>`;
 }
 
-function openModal(idx = null) {
-  state.editingIndex = idx;
-  document.getElementById('modal-title').textContent = idx !== null ? 'Edit Expense' : 'Add Expense';
-  const statusSel = document.getElementById('f-status'); const catSel = document.getElementById('f-category'); const paidBySel = document.getElementById('f-paidby');
-  statusSel.innerHTML = state.settings.stages.map(s => `<option value="${s}">${s}</option>`).join('');
-  catSel.innerHTML = state.settings.categories.map(c => `<option value="${c}">${c}</option>`).join('');
-  paidBySel.innerHTML = state.settings.partners.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
-  if (idx !== null) { const e = state.expenses[idx]; document.getElementById('f-date').value = e.date || ''; document.getElementById('f-status').value = e.status || ''; document.getElementById('f-desc').value = e.description || ''; document.getElementById('f-category').value = e.category || ''; document.getElementById('f-paidby').value = e.paidBy || ''; document.getElementById('f-budget-amt').value = e.budgetAmt || ''; document.getElementById('f-budget-cur').value = e.budgetCur || 'INR'; document.getElementById('f-actual-amt').value = e.actualAmt || ''; document.getElementById('f-actual-cur').value = e.actualCur || 'INR'; document.getElementById('f-split').value = e.split != null ? e.split : 50; document.getElementById('f-notes').value = e.notes || ''; }
-  else { document.getElementById('f-date').value = new Date().toISOString().slice(0,10); document.getElementById('f-status').value = 'Budgeted'; document.getElementById('f-desc').value = ''; document.getElementById('f-category').value = state.settings.categories[0] || ''; document.getElementById('f-paidby').value = state.settings.partners[0]?.name || ''; document.getElementById('f-budget-amt').value = ''; document.getElementById('f-budget-cur').value = 'INR'; document.getElementById('f-actual-amt').value = ''; document.getElementById('f-actual-cur').value = 'INR'; document.getElementById('f-split').value = 50; document.getElementById('f-notes').value = ''; }
-  updateCalc(); document.getElementById('modal').classList.add('open');
+// ---------- Modal Form with Dropdown + free text (datalist) ----------
+function buildFormHTML(txnData = null) {
+  const isEdit = txnData !== null;
+  const data = txnData || { date: new Date().toISOString().slice(0,10), type: 'Expense', desc: '', category: '', status: 'Pending', paidBy: '', currency: 'USD', amountUSD: 0, splitPct: 50, notes: '', rate: state.rateData };
+  return `
+    <label>Date</label><input type="text" id="form_date" placeholder="YYYY-MM-DD" value="${esc(data.date)}">
+    <label>Type <span style="font-weight:normal;">(free text + dropdown)</span></label>
+    <input list="typeOptions" id="form_type" value="${esc(data.type)}">
+    <datalist id="typeOptions"><option>Expense</option><option>Income</option><option>Refund</option><option>Transfer</option></datalist>
+    
+    <label>Description</label><input type="text" id="form_desc" value="${esc(data.desc)}">
+    <label>Category</label><input type="text" id="form_category" value="${esc(data.category)}">
+    
+    <label>Lifecycle Status</label>
+    <input list="statusOptions" id="form_status" value="${esc(data.status)}">
+    <datalist id="statusOptions"><option>Paid</option><option>Pending</option><option>Cancelled</option><option>Draft</option></datalist>
+    
+    <label>Paid By</label>
+    <input list="paidByOptions" id="form_paidBy" value="${esc(data.paidBy)}">
+    <datalist id="paidByOptions"><option>Piyal</option><option>Gautham</option><option>Company</option><option>Shared</option></datalist>
+    
+    <label>Currency</label><input type="text" id="form_currency" value="${esc(data.currency)}" placeholder="USD, INR, EUR">
+    <label>Actual (USD)</label><input type="number" step="any" id="form_amountUSD" value="${data.amountUSD}">
+    <label>Split %</label><input type="number" step="any" id="form_splitPct" value="${data.splitPct}">
+    <label>Notes / Invoice Ref</label><input type="text" id="form_notes" value="${esc(data.notes)}">
+    <label>Rate Used</label><input type="number" step="any" id="form_rate" value="${data.rate}">
+  `;
 }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
-function updateCalc() { const rate = state.settings.rate; const budAmt = parseFloat(document.getElementById('f-budget-amt').value) || 0; const budCur = document.getElementById('f-budget-cur').value; const actAmt = parseFloat(document.getElementById('f-actual-amt').value) || 0; const actCur = document.getElementById('f-actual-cur').value; const split = parseFloat(document.getElementById('f-split').value) || 50; const p1 = state.settings.partners[0]; const p2 = state.settings.partners[1]; const budINR = budCur === 'USD' ? budAmt * rate : budAmt; const actINR = actCur === 'USD' ? actAmt * rate : actAmt; const budUSD = budINR / rate; const actUSD = actINR / rate; const varianceUSD = actUSD - budUSD; const p1ShareUSD = actUSD * (split / 100); const p2ShareUSD = actUSD * (1 - split / 100); document.getElementById('calc-preview').innerHTML = `<strong>Budget: ${fmtUSD(budUSD)}</strong> | Actual: ${fmtUSD(actUSD)} | Var: <span style="color:${varianceUSD<=0?'var(--green)':'var(--red)'}">${varianceUSD<0?'-':'+'}${fmtUSD(Math.abs(varianceUSD))}</span> | ${p1?.name||'P1'}: ${fmtUSD(p1ShareUSD)} · ${p2?.name||'P2'}: ${fmtUSD(p2ShareUSD)}`; }
-function saveExpense() {
-  const e = { id: (state.editingIndex !== null && state.expenses[state.editingIndex]?.id) || getNextId(), date: document.getElementById('f-date').value, description: document.getElementById('f-desc').value.trim(), category: document.getElementById('f-category').value, status: document.getElementById('f-status').value, paidBy: document.getElementById('f-paidby').value, budgetAmt: parseFloat(document.getElementById('f-budget-amt').value) || 0, budgetCur: document.getElementById('f-budget-cur').value, actualAmt: parseFloat(document.getElementById('f-actual-amt').value) || 0, actualCur: document.getElementById('f-actual-cur').value, split: parseFloat(document.getElementById('f-split').value) || 50, notes: document.getElementById('f-notes').value.trim(), rate: state.settings.rate };
-  if (!e.description) { showToast('Description required', 'error'); return; }
-  if (state.editingIndex !== null) state.expenses[state.editingIndex] = e;
-  else state.expenses.push(e);
-  markUnsaved(); closeModal(); renderTable(); renderDashboard(); renderPL(); showToast('Expense saved (click Commit)', 'success');
-}
-function deleteExpense(idx) { if (confirm('Delete?')) { state.expenses.splice(idx, 1); markUnsaved(); renderTable(); renderDashboard(); renderPL(); showToast('Deleted - click Commit', 'success'); } }
-function populateFilters() { const statSel = document.getElementById('filter-status'); const catSel = document.getElementById('filter-category'); statSel.innerHTML = '<option value="">All Statuses</option>' + state.settings.stages.map(s => `<option value="${s}">${s}</option>`).join(''); catSel.innerHTML = '<option value="">All Categories</option>' + state.settings.categories.map(c => `<option value="${c}">${c}</option>`).join(''); }
-function populateSettings() { const p = state.settings; document.getElementById('s-rate').value = p.rate; document.getElementById('partners-settings').innerHTML = `<div style="display:grid;grid-template-columns:70px 1fr 100px 100px;gap:8px;margin-bottom:8px"><span style="font-size:11px;color:var(--text3)">ID</span><span>Name</span><span>Currency</span><span>Split %</span></div>${p.partners.map((pt,i)=>`<div class="partner-row"><span class="partner-id">${pt.id}</span><input type="text" id="p-name-${i}" value="${pt.name}"><select id="p-cur-${i}"><option ${pt.currency==='INR'?'selected':''}>INR</option><option ${pt.currency==='USD'?'selected':''}>USD</option></select><input type="number" id="p-split-${i}" value="${pt.split}" min="0" max="100"></div>`).join('')}`; document.getElementById('categories-settings').innerHTML = p.categories.map((c,i)=>`<div class="settings-row"><label>Category ${i+1}</label><input type="text" id="cat-${i}" value="${c}" style="max-width:280px"></div>`).join(''); document.getElementById('stages-settings').innerHTML = p.stages.map((s,i)=>`<div class="settings-row"><label>Stage ${i+1}</label><input type="text" id="stage-${i}" value="${s}" style="max-width:220px"></div>`).join(''); }
-function addCategory() { state.settings.categories.push('New Category'); populateSettings(); }
-function saveSettings() { state.settings.rate = parseFloat(document.getElementById('s-rate').value) || 84; state.settings.partners = state.settings.partners.map((p,i) => ({ ...p, name: document.getElementById('p-name-'+i)?.value || p.name, currency: document.getElementById('p-cur-'+i)?.value || p.currency, split: parseFloat(document.getElementById('p-split-'+i)?.value) || p.split })); state.settings.categories = state.settings.categories.map((_,i) => document.getElementById('cat-'+i)?.value || '').filter(Boolean); state.settings.stages = state.settings.stages.map((_,i) => document.getElementById('stage-'+i)?.value || '').filter(Boolean); renderDashboard(); markUnsaved(); showToast('Settings saved - click Commit', 'success'); }
-function showToast(msg, type = 'success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'show ' + type; setTimeout(() => t.className = '', 2800); }
-function showPage(id) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); const tabText = id === 'expenses' ? 'expense' : id; document.querySelectorAll('.nav-tab').forEach(t => { if (t.textContent.toLowerCase().includes(tabText)) t.classList.add('active'); }); if (id === 'dashboard') renderPL(); }
 
-document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-fetchFromGitHub();
+function openAddModal() {
+  state.currentEditId = null;
+  document.getElementById('modalTitle').innerText = '➕ Add Transaction';
+  const formContainer = document.getElementById('transactionForm');
+  formContainer.innerHTML = buildFormHTML(null);
+  document.getElementById('modalSaveBtn').onclick = () => saveTransactionFromModal();
+  document.getElementById('formModal').classList.add('visible');
+}
+
+function openEditModal(id) {
+  let txn = state.transactions.find(t => t.id === id);
+  if (!txn) return;
+  state.currentEditId = id;
+  document.getElementById('modalTitle').innerText = '✏️ Edit Transaction';
+  const formContainer = document.getElementById('transactionForm');
+  formContainer.innerHTML = buildFormHTML(txn);
+  document.getElementById('modalSaveBtn').onclick = () => saveTransactionFromModal();
+  document.getElementById('formModal').classList.add('visible');
+}
+
+function saveTransactionFromModal() {
+  // gather values
+  let date = document.getElementById('form_date').value;
+  let type = document.getElementById('form_type').value;
+  let desc = document.getElementById('form_desc').value;
+  let category = document.getElementById('form_category').value;
+  let status = document.getElementById('form_status').value;
+  let paidBy = document.getElementById('form_paidBy').value;
+  let currency = document.getElementById('form_currency').value;
+  let amountUSD = parseFloat(document.getElementById('form_amountUSD').value) || 0;
+  let splitPct = parseFloat(document.getElementById('form_splitPct').value);
+  if (isNaN(splitPct)) splitPct = 50;
+  let notes = document.getElementById('form_notes').value;
+  let rate = parseFloat(document.getElementById('form_rate').value);
+  if (isNaN(rate)) rate = state.rateData;
+
+  let newTxn = {
+    id: state.currentEditId ? state.currentEditId : (state.transactions.length ? Math.max(...state.transactions.map(t=>t.id)) + 1 : 1),
+    date, type, desc, category, status, paidBy, currency,
+    amountUSD, splitPct, notes, rate
+  };
+  recomputeTransaction(newTxn);
+  
+  if (state.currentEditId !== null) {
+    let idx = state.transactions.findIndex(t => t.id === state.currentEditId);
+    if (idx !== -1) state.transactions[idx] = newTxn;
+  } else {
+    state.transactions.push(newTxn);
+  }
+  // renumber IDs sequentially for consistency
+  state.transactions.sort((a,b)=>a.id - b.id);
+  state.transactions.forEach((t, i) => t.id = i+1);
+  
+  closeModal();
+  updateStats();
+  renderTable();
+  showToast(state.currentEditId ? 'Transaction updated' : 'Transaction added');
+}
+
+function deleteTransaction(id) {
+  if (confirm('Delete this transaction permanently?')) {
+    state.transactions = state.transactions.filter(t => t.id !== id);
+    state.transactions.forEach((t, i) => t.id = i+1);
+    updateStats();
+    renderTable();
+    showToast('Deleted');
+  }
+}
+
+function closeModal() {
+  document.getElementById('formModal').classList.remove('visible');
+  state.currentEditId = null;
+}
+
+function filterTable() { state.searchQuery = document.getElementById('searchBox').value; renderTable(); }
+
+async function saveExcel() {
+  if (state.localFileHandle && state.source === 'local') {
+    try {
+      let wb = buildWorkbook();
+      let wbout = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+      let writable = await state.localFileHandle.createWritable();
+      await writable.write(wbout);
+      await writable.close();
+      showToast('✓ Overwrote original database.xlsx');
+    } catch(e) { showToast('Overwrite failed: ' + e.message); }
+  } else {
+    let wb = buildWorkbook();
+    XLSX.writeFile(wb, state.fileName);
+    showToast(`✓ Saved as ${state.fileName}`);
+  }
+}
+
+async function pushToGitHub() {
+  let { token, repo, path, sha } = state.github;
+  if (!token || !repo || !path) { showToast('GitHub not configured'); return; }
+  let btn = document.getElementById('pushGitHubBtn');
+  btn.disabled = true; btn.innerText = 'Pushing...';
+  try {
+    let wb = buildWorkbook();
+    let wbout = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+    let binary = '';
+    let bytes = new Uint8Array(wbout);
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    let b64 = btoa(binary);
+    let res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+      method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Update database.xlsx', content: b64, sha: sha })
+    });
+    if (!res.ok) throw new Error((await res.json()).message);
+    let data = await res.json();
+    state.github.sha = data.content.sha;
+    showToast('✅ Pushed to GitHub');
+  } catch(e) { showToast('Push failed: ' + e.message); }
+  finally { btn.disabled = false; btn.innerText = '⬆ Push to GitHub'; }
+}
+
+window.returnToLanding = returnToLanding;
+window.openAddModal = openAddModal;
+window.openEditModal = openEditModal;
+window.deleteTransaction = deleteTransaction;
+window.saveExcel = saveExcel;
+window.pushToGitHub = pushToGitHub;
+window.filterTable = filterTable;
+window.closeModal = closeModal;
 </script>
 </body>
 </html>
