@@ -432,34 +432,22 @@ async function pushToGitHub(){
   if(!ST.ghToken){document.getElementById('tokenModal').classList.add('visible');document.getElementById('ghToken').focus();return}
   const hdrs={Authorization:`token ${ST.ghToken}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'};
   try{
-    // Step 1: check repo exists and token has push permission
-    const repoRes=await fetch(`https://api.github.com/repos/${ST.ghRepo}`,{headers:hdrs});
-    if(!repoRes.ok){
-      if(repoRes.status===404)toast('Repo not found — check owner/repo name');
-      else if(repoRes.status===401)toast('Token invalid or expired');
-      else toast('Repo check failed: '+repoRes.status);
-      return;
-    }
-    const repoMeta=await repoRes.json();
-    if(!repoMeta.permissions?.push){
-      toast('Token is read-only — enable Contents: Read & Write in GitHub token settings');
-      return;
-    }
-    // Step 2: get latest SHA for the file (if it exists)
-    const filePath=ST.ghPath.replace(/^\//,'').replace(/\/$/,'');
-    const fileUrl=`https://api.github.com/repos/${ST.ghRepo}/contents/${filePath}`;
+    const fileUrl=`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`;
     const check=await fetch(fileUrl,{headers:hdrs});
+    if(!check.ok&&check.status!==404){toast('Could not read file: '+check.status);return}
     let currentSha=null;
     if(check.ok){const fm=await check.json();currentSha=fm.sha}
-    else if(check.status!==404){toast('Could not read file: '+check.status);return}
-    // Step 3: push
     const wbo=XLSX.write(buildWB(),{type:'base64',bookType:'xlsx'});
     const body={message:`KneuraTRAX update ${new Date().toISOString().slice(0,16)}`,content:wbo};
     if(currentSha)body.sha=currentSha;
     const res=await fetch(fileUrl,{method:'PUT',headers:hdrs,body:JSON.stringify(body)});
-    if(!res.ok){const e=await res.json();toast('Push failed: '+(e.message||res.status));return}
-    ST.ghSha=(await res.json()).content.sha;
-    toast('✓ Pushed to GitHub');
+    if(!res.ok){
+      const e=await res.json();
+      if(res.status===401)toast('Token invalid or expired — re-enter in Push Token panel');
+      else toast('Push failed: '+(e.message||res.status));
+      return;
+    }
+    toast('✓ Saved to GitHub');
   }catch(e){toast('Push error: '+e.message)}
 }
 
