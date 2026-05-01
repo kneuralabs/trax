@@ -392,12 +392,16 @@ function closeSheet(){document.getElementById('confirmSheet').classList.remove('
 const GH_REPO='kneuralabs/trax',GH_FILE='database.xlsx';
 async function autoLoadGitHub(){
   try{
-    const res=await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/${GH_FILE}?t=${Date.now()}`);
-    if(!res.ok){toast('Could not load database ('+res.status+')');return false}
-    const buf=await res.arrayBuffer();
+    const token=localStorage.getItem('ghToken')||'';
+    const hdrs={Accept:'application/vnd.github.v3+json'};
+    if(token)hdrs['Authorization']='token '+token;
+    const res=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`,{headers:hdrs});
+    if(!res.ok){toast('Could not load database ('+res.status+')');updateStats();renderTable();return}
+    const meta=await res.json();
+    const raw=atob(meta.content.replace(/\n/g,''));
+    const buf=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)buf[i]=raw.charCodeAt(i);
     parseWB(XLSX.read(buf,{type:'array'}));
-    ST.source='github';ST.ghRepo=GH_REPO;ST.ghPath=GH_FILE;ST.fileName=GH_FILE;
-    ST.ghToken=localStorage.getItem('ghToken')||'';
+    ST.source='github';ST.ghToken=token;ST.fileName=GH_FILE;
     document.getElementById('sourceLabel').textContent=GH_FILE;
   }catch(e){toast('Load error: '+e.message)}
   updateStats();renderTable();
