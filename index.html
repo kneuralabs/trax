@@ -565,22 +565,7 @@ function parseWB(wb){
   txns.forEach((t,i)=>t.id=i+1);ST.transactions=txns;rebuildPH();
 }
 function buildWB(){const wb=XLSX.utils.book_new();const rows=[EXCEL_COLS];for(const t of ST.transactions)rows.push([t.id,t.date,t.type,t.desc,t.category,t.status,t.paidBy,t.currency,t.amountUSD,t.splitPct,t.notes,t.rate]);XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Ledger');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Live Rate",ST.rateData],["Fallback",84]]),'Rates');return wb}
-async function saveExcel(){
-  const wb=buildWB(),wbo=XLSX.write(wb,{type:'array',bookType:'xlsx'});
-  if(ST.localFileHandle){
-    try{const w=await ST.localFileHandle.createWritable();await w.write(wbo);await w.close();toast('✓ Saved')}
-    catch(e){toast('Save failed: '+e.message)}
-  }else if(window.showSaveFilePicker){
-    try{
-      const fh=await window.showSaveFilePicker({suggestedName:ST.fileName,types:[{description:'Excel Workbook',accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]});
-      ST.localFileHandle=fh;ST.fileName=fh.name;
-      document.getElementById('sourceLabel').textContent=fh.name;
-      const w=await fh.createWritable();await w.write(wbo);await w.close();toast('✓ Saved');
-    }catch(e){if(e.name!=='AbortError')toast('Save failed: '+e.message)}
-  }else{
-    XLSX.writeFile(buildWB(),ST.fileName);toast('✓ Downloaded '+ST.fileName);
-  }
-}
+async function saveExcel(){await pushToGitHub()}
 
 /* ============ P&L ============ */
 function showPnLModal(){
