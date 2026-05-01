@@ -71,6 +71,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var
 #app{display:flex;flex-direction:column;height:100vh;height:100dvh;background:var(--bg)}
 .app-header{background:rgba(255,255,255,.92);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:var(--line);padding:0 max(24px,calc(16px + var(--safe-left)));padding-right:max(24px,calc(16px + var(--safe-right)));height:calc(50px + var(--safe-top));padding-top:var(--safe-top);display:flex;align-items:center;gap:6px;flex-shrink:0;position:relative;z-index:10}
 [data-theme=dark] .app-header{background:rgba(26,26,26,.92)}
+[data-theme=dark] .btn-primary{background:var(--label-1);color:#111;border-color:var(--label-1)}
+[data-theme=dark] .btn-primary:hover{background:var(--label-2);border-color:var(--label-2);color:#111}
+[data-theme=dark] .net-card{background:var(--surface-2)}
+[data-theme=dark] .net-lbl{color:var(--label-3)}
+[data-theme=dark] .net-val{color:var(--label-1)}
 .header-brand{font-family:'Inter',sans-serif;font-size:15px;font-weight:700;letter-spacing:-0.03em;margin-right:2px;display:flex;align-items:center;gap:6px}
 .header-logo{width:28px;height:28px;object-fit:contain;mix-blend-mode:multiply;flex-shrink:0}
 [data-theme=dark] .header-logo{mix-blend-mode:screen;filter:invert(1) brightness(1.8)}
