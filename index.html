@@ -6,6 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>KneuraTRAX™ — Shared Ledger + P&L</title>
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/kneuralabs/trax/main/LOGO.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -58,7 +59,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var
 /* APP SHELL */
 #app{display:flex;flex-direction:column;height:100vh;height:100dvh;background:var(--bg)}
 .app-header{background:rgba(255,255,255,.95);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:var(--line);padding:0 max(24px,calc(16px + var(--safe-left)));padding-right:max(24px,calc(16px + var(--safe-right)));height:calc(50px + var(--safe-top));padding-top:var(--safe-top);display:flex;align-items:center;gap:6px;flex-shrink:0;position:relative;z-index:10}
-.header-brand{font-family:'Inter',sans-serif;font-size:15px;font-weight:700;letter-spacing:-0.03em;margin-right:2px}
+.header-brand{font-family:'Inter',sans-serif;font-size:15px;font-weight:700;letter-spacing:-0.03em;margin-right:2px;display:flex;align-items:center;gap:6px}
+.header-logo{width:28px;height:28px;object-fit:contain;mix-blend-mode:multiply;flex-shrink:0}
 .source-pill{background:var(--surface-2);padding:3px 8px;font-size:11px;font-weight:500;color:var(--label-3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:var(--line)}
 .hsp{flex:1}
 .hact{display:flex;align-items:center;gap:2px}
@@ -244,7 +246,7 @@ tr:hover td{background:var(--surface-2)}
 <!-- APP -->
 <div id="app">
   <div class="app-header">
-    <div class="header-brand">KneuraTRAX™</div>
+    <div class="header-brand"><img src="https://raw.githubusercontent.com/kneuralabs/trax/main/LOGO.png" class="header-logo" alt="">KneuraTRAX™</div>
     <div class="source-pill" id="sourceLabel">—</div>
     <div class="hsp"></div>
     <div class="hact">
@@ -514,6 +516,8 @@ function modalKey(e){
   if(e.key==='Tab'){const m=document.querySelector('#formModal .modal');const els=[...m.querySelectorAll('button,input,select,[tabindex]:not([tabindex="-1"])')];const first=els[0],last=els[els.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}
 }
 
+let _autoSaveTimer=null;
+function autoSave(){clearTimeout(_autoSaveTimer);_autoSaveTimer=setTimeout(()=>{if(ST.ghToken)pushToGitHub()},1500)}
 function saveTxn(){
   const date=document.getElementById('fd').value;
   if(!date){toast('Date is required');return}
@@ -522,13 +526,13 @@ function saveTxn(){
   if(ST.currentEditId){const i=ST.transactions.findIndex(t=>t.id===ST.currentEditId);if(i!==-1)ST.transactions[i]=txn}else ST.transactions.push(txn);
   ST.transactions.sort((a,b)=>a.id-b.id);ST.transactions.forEach((t,i)=>t.id=i+1);
   if(txn.paidBy)ST.paidByHistory.add(txn.paidBy);
-  closeModal();updateStats();renderTable();toast(ST.currentEditId?'✓ Updated':'✓ Added');
+  closeModal();updateStats();renderTable();toast(ST.currentEditId?'✓ Updated':'✓ Added');autoSave();
 }
 
 function deleteTransaction(id){
   const txn=ST.transactions.find(t=>t.id===id);
   const lbl=txn?(txn.desc||'this transaction'):'this transaction';
-  showSheet('Delete transaction?',`"${lbl}" will be permanently removed. This cannot be undone.`,'Delete','btn-destructive',()=>{ST.transactions=ST.transactions.filter(t=>t.id!==id);ST.transactions.forEach((t,i)=>t.id=i+1);rebuildPH();updateStats();renderTable();toast('Deleted')});
+  showSheet('Delete transaction?',`"${lbl}" will be permanently removed. This cannot be undone.`,'Delete','btn-destructive',()=>{ST.transactions=ST.transactions.filter(t=>t.id!==id);ST.transactions.forEach((t,i)=>t.id=i+1);rebuildPH();updateStats();renderTable();toast('Deleted');autoSave()});
 }
 function filterTable(){ST.searchQuery=document.getElementById('searchBox').value;renderTable()}
 
