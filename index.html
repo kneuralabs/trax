@@ -271,13 +271,13 @@ tr:hover td{background:var(--surface-2)}
     <div class="error-msg" id="localError"></div>
     <div class="adv-toggle" onclick="toggleAdv()">
       <svg class="ic" id="advChevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-      Connect GitHub
+      Enable push to GitHub
     </div>
     <div class="adv-panel" id="advPanel">
       <input type="password" id="ghToken" placeholder="GitHub personal access token">
       <button class="btn btn-ghost" onclick="handleGitHubLoad()" style="width:100%;justify-content:center">
         <svg class="ic" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-        Connect &amp; Load
+        Save Token
       </button>
       <div class="error-msg" id="ghError"></div>
     </div>
@@ -458,8 +458,12 @@ function toggleAdv(){
   const p=document.getElementById('advPanel'),c=document.getElementById('advChevron'),o=p.classList.toggle('open');
   c.innerHTML=o?'<polyline points="18 15 12 9 6 15"/>':'<polyline points="6 9 12 15 18 9"/>';
 }
-// Auto-load from GitHub if token saved
-(async()=>{const t=localStorage.getItem('ghToken');if(!t)return;document.getElementById('ghToken').value=t;await handleGitHubLoad();})();
+// Auto-load database from public GitHub repo on every visit
+(async()=>{
+  const t=localStorage.getItem('ghToken');
+  if(t)document.getElementById('ghToken').value=t;
+  await autoLoadGitHub();
+})();
 // Hide auto-detect folder button on touch/mobile (no File System Access API)
 if(!window.showDirectoryPicker||('ontouchstart' in window&&window.innerWidth<768)){
   const ab=document.getElementById('autoLocalBtn');if(ab)ab.style.display='none';
@@ -483,32 +487,38 @@ function processFile(file){
   r.readAsArrayBuffer(file);
 }
 const GH_REPO='kneuralabs/trax',GH_FILE='database.xlsx';
-async function handleGitHubLoad(){
-  const token=document.getElementById('ghToken').value.trim();
-  const repo=GH_REPO,pathVal=GH_FILE;
-  const errEl=document.getElementById('ghError');
-  errEl.style.display='none';
-  if(!token){errEl.textContent='Enter your GitHub personal access token.';errEl.style.display='block';return}
-  localStorage.setItem('ghToken',token);
+async function autoLoadGitHub(){
   try{
-    const res=await fetch(`https://api.github.com/repos/${repo}/contents/${pathVal}`,{headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}});
-    if(!res.ok){const e=await res.json();errEl.textContent=`GitHub: ${e.message||res.status}`;errEl.style.display='block';return}
+    const res=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`,{headers:{Accept:'application/vnd.github.v3+json'}});
+    if(!res.ok)return false;
     const meta=await res.json();
     const raw=atob(meta.content.replace(/\n/g,''));
     const buf=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)buf[i]=raw.charCodeAt(i);
     parseWB(XLSX.read(buf,{type:'array'}));
-    ST.source='github';ST.ghToken=token;ST.ghRepo=repo;ST.ghPath=pathVal;ST.ghSha=meta.sha;ST.fileName=pathVal.split('/').pop();
-    document.getElementById('sourceLabel').textContent=ST.fileName;
-    document.getElementById('pushGitHubBtn').style.display='';
-    launchApp();toast('✓ Loaded from GitHub');
-  }catch(e){errEl.textContent='Failed to load: '+e.message;errEl.style.display='block'}
+    ST.source='github';ST.ghRepo=GH_REPO;ST.ghPath=GH_FILE;ST.ghSha=meta.sha;ST.fileName=GH_FILE;
+    ST.ghToken=localStorage.getItem('ghToken')||'';
+    document.getElementById('sourceLabel').textContent=GH_FILE;
+    document.getElementById('pushGitHubBtn').style.display=ST.ghToken?'':'none';
+    launchApp();return true;
+  }catch{return false}
+}
+async function handleGitHubLoad(){
+  const token=document.getElementById('ghToken').value.trim();
+  const errEl=document.getElementById('ghError');
+  errEl.style.display='none';
+  if(!token){errEl.textContent='Enter your GitHub personal access token.';errEl.style.display='block';return}
+  localStorage.setItem('ghToken',token);
+  ST.ghToken=token;
+  document.getElementById('pushGitHubBtn').style.display='';
+  toast('✓ Token saved — you can now push changes');
+  if(ST.source!=='github')await autoLoadGitHub();
 }
 
 /* ============ APP LIFECYCLE ============ */
 function launchApp(){document.getElementById('landing').style.display='none';document.getElementById('app').classList.add('visible');updateStats();renderTable()}
 function returnToLanding(){document.getElementById('discardSheet').classList.add('visible')}
 async function pushToGitHub(){
-  if(!ST.ghToken||!ST.ghRepo){toast('No GitHub session');return}
+  if(!ST.ghToken){const p=document.getElementById('advPanel');if(!p.classList.contains('open'))toggleAdv();toast('Enter your GitHub token to push');return}
   const hdrs={Authorization:`token ${ST.ghToken}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'};
   try{
     // Step 1: check repo exists and token has push permission
