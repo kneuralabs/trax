@@ -392,27 +392,26 @@ function showSheet(title,body,okLabel,okCls,cb){
   b.focus();
 }
 function closeSheet(){document.getElementById('confirmSheet').classList.remove('visible');ST.sheetCb=null}
-/* ============ LANDING (removed) ============ */
-// Auto-load database from public GitHub repo on every visit
-(async()=>{
-  const t=localStorage.getItem('ghToken');
-  if(t)document.getElementById('ghToken').value=t;
-  await autoLoadGitHub();
-})();
+/* ============ AUTO LOAD ============ */
 const GH_REPO='kneuralabs/trax',GH_FILE='database.xlsx';
 async function autoLoadGitHub(){
   try{
-    const res=await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/${GH_FILE}`);
-    if(!res.ok)return false;
+    const res=await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/${GH_FILE}?t=${Date.now()}`);
+    if(!res.ok){toast('Could not load database ('+res.status+')');return false}
     const buf=await res.arrayBuffer();
     parseWB(XLSX.read(buf,{type:'array'}));
     ST.source='github';ST.ghRepo=GH_REPO;ST.ghPath=GH_FILE;ST.fileName=GH_FILE;
     ST.ghToken=localStorage.getItem('ghToken')||'';
     document.getElementById('sourceLabel').textContent=GH_FILE;
     document.getElementById('pushGitHubBtn').style.display=ST.ghToken?'':'none';
-    launchApp();return true;
-  }catch{return false}
+  }catch(e){toast('Load error: '+e.message)}
+  updateStats();renderTable();
 }
+(async()=>{
+  const t=localStorage.getItem('ghToken');
+  if(t)document.getElementById('ghToken').value=t;
+  await autoLoadGitHub();
+})();
 async function handleGitHubLoad(){
   const token=document.getElementById('ghToken').value.trim();
   const errEl=document.getElementById('ghError');
@@ -427,7 +426,7 @@ async function handleGitHubLoad(){
 }
 
 /* ============ APP LIFECYCLE ============ */
-function launchApp(){document.getElementById('app').classList.add('visible');updateStats();renderTable()}
+function launchApp(){updateStats();renderTable()}
 function closeTokenModal(){document.getElementById('tokenModal').classList.remove('visible')}
 async function pushToGitHub(){
   if(!ST.ghToken){document.getElementById('tokenModal').classList.add('visible');document.getElementById('ghToken').focus();return}
