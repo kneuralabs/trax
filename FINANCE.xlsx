@@ -11,6 +11,20 @@
       "paidTo": "CT Gov",
       "ref": "",
       "notes": ""
+    },
+    {
+      "id": 2,
+      "txnId": "TXN-000002",
+      "date": "2026-02-20",
+      "type": "expense",
+      "account": "Utilities",
+      "desc": "Web Domain",
+      "amount": 20,
+      "paidBy": "Piyal Gupta",
+      "paidTo": "GoDaddy",
+      "usdInrRate": 84,
+      "ref": "4021213476",
+      "notes": "Bought the Web Domain"
     }
   ],
   "accounts": [
@@ -123,11 +137,13 @@
       "code": "5007"
     }
   ],
-  "nextId": 2,
+  "nextId": 3,
   "paidByList": [
-    "Gautham Dhar"
+    "Gautham Dhar",
+    "Piyal Gupta"
   ],
   "paidToList": [
-    "CT Gov"
+    "CT Gov",
+    "GoDaddy"
   ]
 }
