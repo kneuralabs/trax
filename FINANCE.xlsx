@@ -1,18 +1,6 @@
 {
   "entries": [
     {
-      "id": 1,
-      "date": "2026-02-19",
-      "type": "expense",
-      "account": "Legal Fees",
-      "desc": "Company formation and EIN",
-      "amount": 120,
-      "paidBy": "Gautham Dhar",
-      "paidTo": "CT Gov",
-      "ref": "",
-      "notes": ""
-    },
-    {
       "id": 2,
       "txnId": "TXN-000002",
       "date": "2026-02-20",
@@ -39,20 +27,6 @@
       "usdInrRate": 84,
       "ref": "",
       "notes": "Bought the Email Domain from GoDaddy"
-    },
-    {
-      "id": 4,
-      "txnId": "TXN-000004",
-      "date": "2026-04-08",
-      "type": "expense",
-      "account": "Office Supplies",
-      "desc": "Claude Pro Subscription",
-      "amount": 21.7,
-      "paidBy": "Gautham Dhar",
-      "paidTo": "Anthropic",
-      "usdInrRate": 84,
-      "ref": "",
-      "notes": "Claude Pro Subscription from Anthropic"
     }
   ],
   "accounts": [
@@ -163,16 +137,21 @@
       "name": "Legal Fees",
       "type": "expense",
       "code": "5007"
+    },
+    {
+      "id": 1778848759039,
+      "name": "SaaS Subscription",
+      "type": "expense",
+      "code": "5008"
     }
   ],
-  "nextId": 5,
+  "nextId": 4,
   "paidByList": [
     "Gautham Dhar",
     "Piyal Gupta"
   ],
   "paidToList": [
     "CT Gov",
-    "GoDaddy",
-    "Anthropic"
+    "GoDaddy"
   ]
 }
