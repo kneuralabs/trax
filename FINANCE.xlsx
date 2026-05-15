@@ -39,6 +39,20 @@
       "usdInrRate": 84,
       "ref": "",
       "notes": "Bought the Email Domain from GoDaddy"
+    },
+    {
+      "id": 4,
+      "txnId": "TXN-000004",
+      "date": "2026-04-08",
+      "type": "expense",
+      "account": "Office Supplies",
+      "desc": "Claude Pro Subscription",
+      "amount": 21.7,
+      "paidBy": "Gautham Dhar",
+      "paidTo": "Anthropic",
+      "usdInrRate": 84,
+      "ref": "",
+      "notes": "Claude Pro Subscription from Anthropic"
     }
   ],
   "accounts": [
@@ -151,13 +165,14 @@
       "code": "5007"
     }
   ],
-  "nextId": 4,
+  "nextId": 5,
   "paidByList": [
     "Gautham Dhar",
     "Piyal Gupta"
   ],
   "paidToList": [
     "CT Gov",
-    "GoDaddy"
+    "GoDaddy",
+    "Anthropic"
   ]
 }
