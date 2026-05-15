@@ -55,6 +55,20 @@
       "usdInrRate": 84,
       "ref": "",
       "notes": "Monthly Renewal - Claude Pro for May 2026"
+    },
+    {
+      "id": 6,
+      "txnId": "TXN-000006",
+      "date": "2026-02-19",
+      "type": "expense",
+      "account": "Legal Fees",
+      "desc": "Company Formation and EIN",
+      "amount": 120,
+      "paidBy": "",
+      "paidTo": "Secretary of the State of Connecticut  Certificate of Organization",
+      "usdInrRate": 84,
+      "ref": "Filing Number: 0014090438",
+      "notes": "Paid to Secretary of the State of Connecticut \nCertificate of Organization for Kneuralabs Company Formation and EIN"
     }
   ],
   "accounts": [
@@ -173,7 +187,7 @@
       "code": "5008"
     }
   ],
-  "nextId": 6,
+  "nextId": 7,
   "paidByList": [
     "Gautham Dhar",
     "Piyal Gupta"
@@ -181,6 +195,7 @@
   "paidToList": [
     "CT Gov",
     "GoDaddy",
-    "Anthropic"
+    "Anthropic",
+    "Secretary of the State of Connecticut  Certificate of Organization"
   ]
 }
