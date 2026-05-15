@@ -24,7 +24,21 @@
       "paidTo": "GoDaddy",
       "usdInrRate": 84,
       "ref": "4021213476",
-      "notes": "Bought the Web Domain"
+      "notes": "Bought the Web Domain from GoDaddy"
+    },
+    {
+      "id": 3,
+      "txnId": "TXN-000003",
+      "date": "2026-02-24",
+      "type": "expense",
+      "account": "Utilities",
+      "desc": "Email Domain",
+      "amount": 17.26,
+      "paidBy": "Piyal Gupta",
+      "paidTo": "GoDaddy",
+      "usdInrRate": 84,
+      "ref": "",
+      "notes": "Bought the Email Domain from GoDaddy"
     }
   ],
   "accounts": [
@@ -137,7 +151,7 @@
       "code": "5007"
     }
   ],
-  "nextId": 3,
+  "nextId": 4,
   "paidByList": [
     "Gautham Dhar",
     "Piyal Gupta"
