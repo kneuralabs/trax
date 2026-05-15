@@ -27,6 +27,20 @@
       "usdInrRate": 84,
       "ref": "",
       "notes": "Bought the Email Domain from GoDaddy"
+    },
+    {
+      "id": 4,
+      "txnId": "TXN-000004",
+      "date": "2026-04-08",
+      "type": "expense",
+      "account": "SaaS Subscription",
+      "desc": "Monthly Renewal - Claude Pro",
+      "amount": 21.7,
+      "paidBy": "Gautham Dhar",
+      "paidTo": "Anthropic",
+      "usdInrRate": 84,
+      "ref": "",
+      "notes": "Monthly Renewal - Claude Pro for May 2026"
     }
   ],
   "accounts": [
@@ -145,13 +159,14 @@
       "code": "5008"
     }
   ],
-  "nextId": 4,
+  "nextId": 5,
   "paidByList": [
     "Gautham Dhar",
     "Piyal Gupta"
   ],
   "paidToList": [
     "CT Gov",
-    "GoDaddy"
+    "GoDaddy",
+    "Anthropic"
   ]
 }
