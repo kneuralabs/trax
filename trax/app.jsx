@@ -141,10 +141,13 @@ function App() {
         React.createElement('div', { className: 'tb-spacer' }),
         React.createElement('div', { className: 'tb-actions' },
           /* currency */
-          React.createElement('div', { className: 'seg hide-sm' },
-            ['USD', 'INR'].map(c => React.createElement('button', {
+          React.createElement('div', { className: 'seg' },
+            [['USD', '$'], ['INR', '₹']].map(([c, sym]) => React.createElement('button', {
               key: c, className: currency === c ? 'on accent' : '', onClick: () => TRAX.setPref('currency', c),
-            }, c))
+            },
+              React.createElement('span', { className: 'cur-full' }, c),
+              React.createElement('span', { className: 'cur-sym' }, sym)
+            ))
           ),
           /* source pill */
           React.createElement('button', { className: 'pill ' + pillCls, onClick: () => setGhModal(true), title: 'Data source' },
@@ -153,11 +156,12 @@ function App() {
           React.createElement('button', { className: 'icobtn', 'data-tip': theme === 'dark' ? 'Light mode' : 'Dark mode', onClick: () => TRAX.setPref('theme', theme === 'dark' ? 'light' : 'dark') },
             React.createElement(Icon, { name: theme === 'dark' ? 'sun' : 'moon', w: 15 })),
           /* export \u2014 hidden on very small screens */
-          React.createElement('button', { className: 'icobtn hide-sm', 'data-tip': 'Export FINANCE.xlsx', onClick: () => { TRAX.exportJSON(); toast('Downloaded FINANCE.xlsx', 'ok'); } },
+          React.createElement('button', { className: 'icobtn', 'data-tip': 'Export FINANCE.xlsx', onClick: () => { TRAX.exportJSON(); toast('Downloaded FINANCE.xlsx', 'ok'); } },
             React.createElement(Icon, { name: 'download', w: 15 })),
           /* new */
           React.createElement('button', { className: 'btn btn-accent btn-sm', onClick: () => setEntryModal({}) },
-            React.createElement(Icon, { name: 'plus', w: 14 }), 'New')
+            React.createElement(Icon, { name: 'plus', w: 14 }),
+            React.createElement('span', { className: 'btn-new-label' }, 'New'))
         )
       ),
       React.createElement('div', { className: 'content', key: route, 'data-screen-label': cur.label }, screen)
