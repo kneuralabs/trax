@@ -69,6 +69,20 @@
       "usdInrRate": 84,
       "ref": "Filing Number: 0014090438",
       "notes": "Paid to Secretary of the State of Connecticut \nCertificate of Organization for Kneuralabs Company Formation and EIN"
+    },
+    {
+      "id": 7,
+      "txnId": "TXN-000007",
+      "date": "2026-06-08",
+      "type": "expense",
+      "account": "SaaS Subscription",
+      "desc": "Monthly Renewal - Claude Pro",
+      "amount": 21.7,
+      "paidBy": "Gautham Dhar",
+      "paidTo": "Anthropic",
+      "usdInrRate": 84,
+      "ref": "",
+      "notes": "Monthly Renewal - Claude Pro Jun 2026"
     }
   ],
   "accounts": [
@@ -187,7 +201,7 @@
       "code": "5008"
     }
   ],
-  "nextId": 7,
+  "nextId": 8,
   "paidByList": [
     "Gautham Dhar",
     "Piyal Gupta"
