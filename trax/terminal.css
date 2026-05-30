@@ -231,7 +231,7 @@ table.tx tbody tr { transition: background 90ms; }
 table.tx tbody tr:hover td { background: var(--bg-3); }
 table.tx td.r, table.tx th.r { text-align: right; }
 .t-id { font-family: var(--mono); font-size: 11px; color: var(--text-3); }
-.t-desc { font-weight: 550; }
+.t-desc { font-weight: 550; font-size: 12px; }
 .t-meta { font-size: 10.5px; color: var(--text-3); margin-top: 1px; }
 .t-amt { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
 
