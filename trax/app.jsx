@@ -49,6 +49,17 @@ function App() {
   useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
   useEffect(() => { localStorage.setItem('trax_route', route); }, [route]);
 
+  // autosave to localStorage 2 s after any store change
+  useEffect(() => {
+    if (!ready) return;
+    let timer;
+    const unsub = TRAX.subscribe(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => TRAX.persistLocal(), 2000);
+    });
+    return () => { clearTimeout(timer); unsub(); };
+  }, [ready]);
+
   // keyboard
   useEffect(() => {
     const h = e => {
@@ -160,6 +171,13 @@ function App() {
           /* export \u2014 hidden on very small screens */
           React.createElement('button', { className: 'icobtn', 'data-tip': 'Export FINANCE.xlsx', onClick: () => { TRAX.exportJSON(); toast('Downloaded FINANCE.xlsx', 'ok'); } },
             React.createElement(Icon, { name: 'download', w: 15 })),
+          /* save */
+          React.createElement('button', {
+            className: 'icobtn' + (sync.state === 'ok' ? ' save-ok' : ''),
+            'data-tip': sync.state === 'syncing' ? 'Saving\u2026' : sync.state === 'ok' ? 'Saved!' : 'Save',
+            disabled: sync.state === 'syncing',
+            onClick: () => window.__traxSave('Manual save'),
+          }, React.createElement(Icon, { name: sync.state === 'syncing' ? 'refresh' : 'save', w: 15 })),
           /* new */
           React.createElement('button', { className: 'btn btn-accent btn-sm', onClick: () => setEntryModal({}) },
             React.createElement(Icon, { name: 'plus', w: 14 }),
