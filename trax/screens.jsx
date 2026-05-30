@@ -7,9 +7,9 @@ function fmtDate(d) {
 }
 
 function delEntry(e, after) {
-  if (window.confirm('Delete ' + e.txnId + ' — "' + e.desc + '"?')) {
+  window.__traxConfirm('Are you sure you want to delete ' + e.txnId + ' — "' + e.desc + '"?', () => {
     TRAX.deleteEntry(e.id); window.__traxSave('Delete ' + e.txnId); toast('Entry deleted', ''); after && after();
-  }
+  });
 }
 
 /* ============ DASHBOARD ============ */
@@ -148,7 +148,7 @@ function Accounts({ S, currency, openAccount }) {
   function delAcc(a) {
     const used = usage[a.name] && usage[a.name].n;
     if (used) { toast('Cannot delete — ' + used + ' entries use this account', 'err'); return; }
-    if (window.confirm('Delete account "' + a.name + '"?')) { TRAX.deleteAccount(a.id); window.__traxSave('Delete account ' + a.name); toast('Account deleted', ''); }
+    window.__traxConfirm('Are you sure you want to delete account "' + a.name + '"?', () => { TRAX.deleteAccount(a.id); window.__traxSave('Delete account ' + a.name); toast('Account deleted', ''); });
   }
 
   return React.createElement('div', { className: 'page' },
