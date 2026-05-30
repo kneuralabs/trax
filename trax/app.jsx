@@ -84,6 +84,15 @@ function App() {
     default: screen = React.createElement(Dashboard, screenProps);
   }
 
+  // Bottom nav items: the 5 most important screens
+  const BOTTOM_NAV = [
+    { key: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { key: 'ledger', label: 'Ledger', icon: 'ledger' },
+    { key: 'accounts', label: 'Accounts', icon: 'accounts' },
+    { key: 'pl', label: 'P&L', icon: 'pl' },
+    { key: 'bs', label: 'Balance', icon: 'bs' },
+  ];
+
   return React.createElement('div', { className: 'app' },
     /* sidebar */
     React.createElement('aside', { className: 'sidebar' + (sbOpen ? ' open' : '') },
@@ -120,7 +129,7 @@ function App() {
         React.createElement('div', { className: 'tb-spacer' }),
         React.createElement('div', { className: 'tb-actions' },
           /* currency */
-          React.createElement('div', { className: 'seg' },
+          React.createElement('div', { className: 'seg hide-sm' },
             ['USD', 'INR'].map(c => React.createElement('button', {
               key: c, className: currency === c ? 'on accent' : '', onClick: () => TRAX.setPref('currency', c),
             }, c))
@@ -128,18 +137,27 @@ function App() {
           /* source pill */
           React.createElement('button', { className: 'pill ' + pillCls, onClick: () => setGhModal(true), title: 'Data source' },
             React.createElement('span', { className: 'dot' }), pillTxt),
-          /* export */
-          React.createElement('button', { className: 'icobtn', 'data-tip': 'Export FINANCE.xlsx', onClick: () => { TRAX.exportJSON(); toast('Downloaded FINANCE.xlsx', 'ok'); } },
-            React.createElement(Icon, { name: 'download', w: 15 })),
           /* theme */
           React.createElement('button', { className: 'icobtn', 'data-tip': theme === 'dark' ? 'Light mode' : 'Dark mode', onClick: () => TRAX.setPref('theme', theme === 'dark' ? 'light' : 'dark') },
             React.createElement(Icon, { name: theme === 'dark' ? 'sun' : 'moon', w: 15 })),
+          /* export \u2014 hidden on very small screens */
+          React.createElement('button', { className: 'icobtn hide-sm', 'data-tip': 'Export FINANCE.xlsx', onClick: () => { TRAX.exportJSON(); toast('Downloaded FINANCE.xlsx', 'ok'); } },
+            React.createElement(Icon, { name: 'download', w: 15 })),
           /* new */
           React.createElement('button', { className: 'btn btn-accent btn-sm', onClick: () => setEntryModal({}) },
             React.createElement(Icon, { name: 'plus', w: 14 }), 'New')
         )
       ),
       React.createElement('div', { className: 'content', key: route, 'data-screen-label': cur.label }, screen)
+    ),
+
+    /* bottom nav \u2014 visible only on mobile (< 480px via CSS) */
+    React.createElement('nav', { className: 'bottom-nav' },
+      React.createElement('div', { className: 'bottom-nav-inner' },
+        BOTTOM_NAV.map(it => React.createElement('button', {
+          key: it.key, className: 'bn-item' + (route === it.key ? ' active' : ''), onClick: () => go(it.key),
+        }, React.createElement(Icon, { name: it.icon, w: 18 }), it.label))
+      )
     ),
 
     /* modals */
