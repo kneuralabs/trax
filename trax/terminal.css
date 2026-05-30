@@ -132,6 +132,22 @@ nav { flex: 1; overflow-y: auto; padding: 10px 8px; }
 .tb-actions { display: flex; align-items: center; gap: 8px; }
 .hamburger { display: none; }
 
+/* Topbar brand — visible when the persistent sidebar is not shown */
+.tb-brand { display: flex; align-items: center; gap: 8px; margin-right: 2px; flex-shrink: 0; }
+.tb-brand-mark {
+  width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+  overflow: hidden; background: var(--bg-3);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.tb-brand-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tb-brand-name { font-family: var(--ui); font-weight: 600; font-size: 14px; letter-spacing: 0; line-height: 1; white-space: nowrap; }
+/* Hide on desktop and tablet landscape — sidebar is always visible there */
+@media (min-width: 1024px) { .tb-brand { display: none; } }
+@media (max-width: 1023px) and (min-width: 768px) and (orientation: landscape) { .tb-brand { display: none; } }
+/* On very small mobile portrait, show logo only — no room for name */
+@media (max-width: 479px) { .tb-brand-name { display: none; } }
+
 /* segmented control (currency / period / theme) */
 .seg { display: inline-flex; background: var(--bg-3); border: 1px solid var(--line); border-radius: var(--r); padding: 2px; gap: 2px; }
 .seg button { font-family: var(--ui); font-size: 11px; font-weight: 600; padding: 4px 10px; border: none; background: none; color: var(--text-2); cursor: pointer; border-radius: 3px; transition: background 130ms, color 130ms; letter-spacing: 0.3px; }

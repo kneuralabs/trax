@@ -125,6 +125,15 @@ function App() {
     React.createElement('div', { className: 'main' },
       React.createElement('div', { className: 'topbar' },
         React.createElement('button', { className: 'icobtn hamburger', onClick: () => setSbOpen(true) }, React.createElement(Icon, { name: 'menu', w: 16 })),
+        /* Brand mark — shown only when the persistent sidebar is not visible */
+        React.createElement('div', { className: 'tb-brand' },
+          React.createElement('div', { className: 'tb-brand-mark' },
+            React.createElement('img', { src: 'LOGO.png', alt: 'KneuraTrax' })
+          ),
+          React.createElement('div', { className: 'tb-brand-name' },
+            'KneuraTrax', React.createElement('sup', { className: 'brand-tm' }, '™')
+          )
+        ),
         React.createElement('div', { className: 'tb-title' },
           React.createElement('div', { className: 'tb-crumb' }, cur.crumb),
           React.createElement('div', { className: 'tb-h1' }, cur.label)
