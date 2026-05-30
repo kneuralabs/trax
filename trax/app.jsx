@@ -21,6 +21,7 @@ function App() {
   const [entryModal, setEntryModal] = useState(null);   // {editing} or {} for new, or null
   const [acctModal, setAcctModal] = useState(null);
   const [ghModal, setGhModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(null); // { message, onConfirm }
   const [sbOpen, setSbOpen] = useState(false);
   const [sync, setSync] = useState({ state: 'idle' });
   const [ready, setReady] = useState(false);
@@ -32,6 +33,7 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     TRAX.load().then(src => { setReady(true); });
+    window.__traxConfirm = (message, onConfirm) => setConfirmModal({ message, onConfirm });
     // global save fn
     window.__traxSave = async (msg) => {
       const connected = TRAX.Store.gh && TRAX.Store.gh.token;
@@ -180,6 +182,7 @@ function App() {
     entryModal && React.createElement(EntryModal, { editing: entryModal.editing, onClose: () => setEntryModal(null) }),
     acctModal && React.createElement(AccountModal, { editing: acctModal.editing, onClose: () => setAcctModal(null) }),
     ghModal && React.createElement(GithubModal, { onClose: () => setGhModal(false) }),
+    confirmModal && React.createElement(ConfirmModal, { message: confirmModal.message, onConfirm: confirmModal.onConfirm, onClose: () => setConfirmModal(null) }),
     React.createElement(Toast, null)
   );
 }

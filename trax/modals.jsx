@@ -222,4 +222,20 @@ function GithubModal({ onClose }) {
   );
 }
 
-Object.assign(window, { Modal, EntryModal, AccountModal, GithubModal });
+/* ---------------- Confirm Modal ---------------- */
+function ConfirmModal({ message, onConfirm, onClose }) {
+  return React.createElement(Modal, {
+    title: 'Confirm Delete',
+    onClose,
+    footer: [
+      React.createElement('button', { key: 'c', className: 'btn btn-ghost', onClick: onClose }, 'Cancel'),
+      React.createElement('button', { key: 'd', className: 'btn btn-danger', onClick: () => { onConfirm(); onClose(); } }, 'Delete'),
+    ],
+  },
+    React.createElement('div', { className: 'dialog-bd' },
+      React.createElement('p', { style: { margin: '4px 0 8px', color: 'var(--text)' } }, message)
+    )
+  );
+}
+
+Object.assign(window, { Modal, EntryModal, AccountModal, GithubModal, ConfirmModal });
