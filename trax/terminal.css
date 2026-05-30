@@ -271,16 +271,30 @@ select.input { cursor: pointer; -webkit-appearance: none; appearance: none; back
 .rpt-sec.exp .bar { background: var(--neg); } .rpt-sec.exp { color: var(--neg); }
 .rpt-sec.ast .bar { background: var(--info); } .rpt-sec.ast { color: var(--info); }
 .rpt-sec.lia .bar { background: var(--accent); } .rpt-sec.lia { color: var(--accent); }
-.rpt-line { display: flex; justify-content: space-between; align-items: center; padding: 9px 18px; border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+
+/* Each line: label stretches, value column fixed-width right-aligned */
+.rpt-line { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 18px; border-bottom: 1px solid var(--line-soft); font-size: 13px; gap: 16px; }
 .rpt-line:hover { background: var(--bg-3); }
+.rpt-label { flex: 1; min-width: 0; }
 .rpt-line .lcode { font-family: var(--mono); font-size: 10.5px; color: var(--text-3); margin-right: 9px; }
-.rpt-line .lv { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
-.rpt-line.sub { font-weight: 700; background: var(--bg-3); border-top: 1px solid var(--line); }
-.rpt-line.net { background: var(--bg-inset); font-weight: 700; font-size: 14px; padding: 14px 18px; border-bottom: none; }
-.rpt-line.net .lv { color: var(--accent); font-size: 16px; }
-.rpt-balance { margin: 14px 18px 20px; padding: 11px 16px; border-radius: var(--r); display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.rpt-line .lv { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.2px; white-space: nowrap; text-align: right; min-width: 160px; flex-shrink: 0; }
+
+/* color overrides — higher specificity so they beat .rpt-line.net .lv */
+.lv.pos { color: var(--pos); }
+.lv.neg { color: var(--neg); }
+
+/* subtotal rows — slightly larger value */
+.rpt-line.sub { font-weight: 700; background: var(--bg-3); border-top: 1px solid var(--line); font-size: 13.5px; }
+.rpt-line.sub .lv { font-size: 15px; }
+
+/* net / bottom-line row — largest */
+.rpt-line.net { background: var(--bg-inset); font-weight: 700; font-size: 15px; padding: 20px 18px; border-bottom: none; }
+.rpt-line.net .lv { font-size: 22px; font-weight: 700; letter-spacing: -0.6px; }
+
+.rpt-balance { margin: 14px 18px 20px; padding: 12px 18px; border-radius: var(--r); display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 12px; font-weight: 600; gap: 12px; }
 .rpt-balance.ok { background: var(--pos-dim); color: var(--pos); }
 .rpt-balance.no { background: var(--neg-dim); color: var(--neg); }
+.rpt-balance .num { font-size: 14px; white-space: nowrap; }
 .rpt-cols { display: grid; grid-template-columns: 1fr 1fr; }
 .rpt-cols > div:first-child { border-right: 1px solid var(--line); }
 
