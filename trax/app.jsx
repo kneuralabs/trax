@@ -97,7 +97,9 @@ function App() {
     /* sidebar */
     React.createElement('aside', { className: 'sidebar' + (sbOpen ? ' open' : '') },
       React.createElement('div', { className: 'brand' },
-        React.createElement('div', { className: 'brand-mark' }, 'T'),
+        React.createElement('div', { className: 'brand-mark' },
+          React.createElement('img', { src: 'LOGO.png', alt: 'TRAX logo' })
+        ),
         React.createElement('div', null,
           React.createElement('div', { className: 'brand-name' }, 'TRAX'),
           React.createElement('div', { className: 'brand-sub' }, 'Kneuralabs Ledger')

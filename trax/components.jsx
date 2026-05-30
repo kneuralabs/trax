@@ -109,4 +109,19 @@ function CatBars({ rows, currency, color }) {
   );
 }
 
-Object.assign(window, { Icon, useStore, toast, Toast, TypeBadge, Empty, BarChart, CatBars });
+/* ---------- cash register digit roller ---------- */
+function RollDigits({ text }) {
+  return React.createElement(React.Fragment, null,
+    text.split('').map((ch, i) => {
+      if (!/[0-9]/.test(ch)) return React.createElement('span', { key: i }, ch);
+      return React.createElement('span', { key: i, className: 'digit-col' },
+        React.createElement('span', {
+          className: 'digit-col-inner',
+          style: { animationDelay: (i * 40) + 'ms' }
+        }, ch)
+      );
+    })
+  );
+}
+
+Object.assign(window, { Icon, useStore, toast, Toast, TypeBadge, Empty, BarChart, CatBars, RollDigits });

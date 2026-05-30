@@ -79,7 +79,7 @@ function LedgerTable({ rows, currency, openEntry, compact }) {
       React.createElement('th', { style: { width: 54 } }, '')
     )),
     React.createElement('tbody', null, rows.map(e => React.createElement('tr', { key: e.id },
-      React.createElement('td', null, React.createElement('span', { className: 't-id' }, e.txnId.replace('TXN-', '#'))),
+      React.createElement('td', null, React.createElement('span', { className: 't-id' }, React.createElement(RollDigits, { text: e.txnId.replace('TXN-', '#') }))),
       React.createElement('td', { className: 'num', style: { color: 'var(--text-2)' } }, fmtDate(e.date)),
       React.createElement('td', null, React.createElement(TypeBadge, { type: e.type })),
       !compact && React.createElement('td', null, e.account || '\u2014'),
