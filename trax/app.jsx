@@ -101,8 +101,9 @@ function App() {
           React.createElement('img', { src: 'LOGO.png', alt: 'TRAX logo' })
         ),
         React.createElement('div', null,
-          React.createElement('div', { className: 'brand-name' }, 'TRAX'),
-          React.createElement('div', { className: 'brand-sub' }, 'Kneuralabs Ledger')
+          React.createElement('div', { className: 'brand-name' },
+            'KneuraTrax', React.createElement('sup', { className: 'brand-tm' }, '™')),
+          React.createElement('div', { className: 'brand-sub' }, 'Financial ledger')
         )
       ),
       React.createElement('nav', null,

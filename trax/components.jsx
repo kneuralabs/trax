@@ -114,14 +114,15 @@ const FLIP_CHARS = '0123456789';
 
 function FlipChar({ char, index, epoch }) {
   const isDigit = /[0-9]/.test(char);
-  const [{ disp, key }, setState] = useState({
+  const [{ disp, rev }, setState] = useState({
     disp: isDigit ? FLIP_CHARS[Math.floor(Math.random() * 10)] : char,
-    key: 0,
+    rev: 0,
   });
   const tid = useRef(null);
 
   useEffect(() => {
-    if (!isDigit) { setState({ disp: char, key: 0 }); return; }
+    clearTimeout(tid.current);
+    if (!isDigit) { setState({ disp: char, rev: 0 }); return; }
 
     const CYCLES = 12;
     let count = 0;
@@ -131,7 +132,7 @@ function FlipChar({ char, index, epoch }) {
       const done = count >= CYCLES;
       setState(s => ({
         disp: done ? char : FLIP_CHARS[Math.floor(Math.random() * 10)],
-        key: s.key + 1,
+        rev: s.rev + 1,
       }));
       if (!done) tid.current = setTimeout(tick, 28 + count * 5);
     }
@@ -142,8 +143,9 @@ function FlipChar({ char, index, epoch }) {
 
   if (!isDigit) return React.createElement('span', null, char);
 
+  /* Changing `rev` re-keys the inner span → remount → CSS animation replays */
   return React.createElement('span', { className: 'flip-outer' },
-    React.createElement('span', { key, className: 'flip-char' }, disp)
+    React.createElement('span', { key: rev, className: 'flip-char' }, disp)
   );
 }
 
