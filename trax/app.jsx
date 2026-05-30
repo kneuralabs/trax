@@ -143,8 +143,11 @@ function App() {
           React.createElement('div', { className: 'tb-brand-mark' },
             React.createElement('img', { src: 'LOGO.png', alt: 'KneuraTrax' })
           ),
-          React.createElement('div', { className: 'tb-brand-name' },
-            'KneuraTrax', React.createElement('sup', { className: 'brand-tm' }, '™')
+          React.createElement('div', null,
+            React.createElement('div', { className: 'tb-brand-name' },
+              'KneuraTrax', React.createElement('sup', { className: 'brand-tm' }, '™')
+            ),
+            React.createElement('div', { className: 'tb-brand-sub' }, 'Financial Ledger')
           )
         ),
         React.createElement('div', { className: 'tb-title' },
