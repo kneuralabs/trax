@@ -1,0 +1,203 @@
+/* TRAX — inline seed snapshot of FINANCE.xlsx (fallback when live fetch/GitHub unavailable).
+   Generated from FINANCE.xlsx; the live file/GitHub always take priority. */
+window.TRAX_SEED = {
+  "entries": [
+    {
+      "id": 2,
+      "txnId": "TXN-000002",
+      "date": "2026-02-20",
+      "type": "expense",
+      "account": "SaaS Subscription",
+      "desc": "Web Domain",
+      "amount": 20,
+      "paidBy": "Piyal Gupta",
+      "paidTo": "GoDaddy",
+      "usdInrRate": 84,
+      "ref": "4021213476",
+      "notes": "Bought the Web Domain from GoDaddy"
+    },
+    {
+      "id": 3,
+      "txnId": "TXN-000003",
+      "date": "2026-02-24",
+      "type": "expense",
+      "account": "SaaS Subscription",
+      "desc": "Email Domain",
+      "amount": 17.26,
+      "paidBy": "Piyal Gupta",
+      "paidTo": "GoDaddy",
+      "usdInrRate": 84,
+      "ref": "4021215611",
+      "notes": "Bought the Email Domain from GoDaddy"
+    },
+    {
+      "id": 4,
+      "txnId": "TXN-000004",
+      "date": "2026-04-08",
+      "type": "expense",
+      "account": "SaaS Subscription",
+      "desc": "Monthly Renewal - Claude Pro",
+      "amount": 21.7,
+      "paidBy": "Gautham Dhar",
+      "paidTo": "Anthropic",
+      "usdInrRate": 84,
+      "ref": "",
+      "notes": "Monthly Renewal - Claude Pro for April 2026"
+    },
+    {
+      "id": 5,
+      "txnId": "TXN-000005",
+      "date": "2026-05-08",
+      "type": "expense",
+      "account": "SaaS Subscription",
+      "desc": "Monthly Renewal - Claude Pro",
+      "amount": 21.7,
+      "paidBy": "Gautham Dhar",
+      "paidTo": "Anthropic",
+      "usdInrRate": 84,
+      "ref": "",
+      "notes": "Monthly Renewal - Claude Pro for May 2026"
+    },
+    {
+      "id": 6,
+      "txnId": "TXN-000006",
+      "date": "2026-02-19",
+      "type": "expense",
+      "account": "Legal Fees",
+      "desc": "Company Formation and EIN",
+      "amount": 120,
+      "paidBy": "Gautham Dhar",
+      "paidTo": "Secretary of the State of Connecticut  Certificate of Organization",
+      "usdInrRate": 84,
+      "ref": "Filing Number: 0014090438",
+      "notes": "Paid to Secretary of the State of Connecticut \nCertificate of Organization for Kneuralabs Company Formation and EIN"
+    }
+  ],
+  "accounts": [
+    {
+      "id": 1,
+      "name": "Sales Revenue",
+      "type": "income",
+      "code": "4001"
+    },
+    {
+      "id": 2,
+      "name": "Service Revenue",
+      "type": "income",
+      "code": "4002"
+    },
+    {
+      "id": 3,
+      "name": "Other Income",
+      "type": "income",
+      "code": "4003"
+    },
+    {
+      "id": 4,
+      "name": "Cost of Goods Sold",
+      "type": "expense",
+      "code": "5001"
+    },
+    {
+      "id": 5,
+      "name": "Salaries & Wages",
+      "type": "expense",
+      "code": "5002"
+    },
+    {
+      "id": 6,
+      "name": "Rent",
+      "type": "expense",
+      "code": "5003"
+    },
+    {
+      "id": 7,
+      "name": "Utilities",
+      "type": "expense",
+      "code": "5004"
+    },
+    {
+      "id": 8,
+      "name": "Marketing & Advertising",
+      "type": "expense",
+      "code": "5005"
+    },
+    {
+      "id": 9,
+      "name": "Office Supplies",
+      "type": "expense",
+      "code": "5006"
+    },
+    {
+      "id": 10,
+      "name": "Cash",
+      "type": "asset",
+      "code": "1001"
+    },
+    {
+      "id": 11,
+      "name": "Bank Account",
+      "type": "asset",
+      "code": "1002"
+    },
+    {
+      "id": 12,
+      "name": "Accounts Receivable",
+      "type": "asset",
+      "code": "1003"
+    },
+    {
+      "id": 13,
+      "name": "Fixed Assets",
+      "type": "asset",
+      "code": "1004"
+    },
+    {
+      "id": 14,
+      "name": "Accounts Payable",
+      "type": "liability",
+      "code": "2001"
+    },
+    {
+      "id": 15,
+      "name": "Loans Payable",
+      "type": "liability",
+      "code": "2002"
+    },
+    {
+      "id": 16,
+      "name": "Owner Equity",
+      "type": "equity",
+      "code": "3001"
+    },
+    {
+      "id": 17,
+      "name": "Retained Earnings",
+      "type": "equity",
+      "code": "3002"
+    },
+    {
+      "id": 1778840867950,
+      "name": "Legal Fees",
+      "type": "expense",
+      "code": "5007"
+    },
+    {
+      "id": 1778848759039,
+      "name": "SaaS Subscription",
+      "type": "expense",
+      "code": "5008"
+    }
+  ],
+  "nextId": 7,
+  "paidByList": [
+    "Gautham Dhar",
+    "Piyal Gupta"
+  ],
+  "paidToList": [
+    "CT Gov",
+    "GoDaddy",
+    "Anthropic",
+    "Secretary of the State of Connecticut  Certificate of Organization"
+  ]
+};
