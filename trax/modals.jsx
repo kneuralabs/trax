@@ -23,7 +23,7 @@ function Modal({ title, sub, onClose, children, footer, wide }) {
 
 /* ---------------- Entry Modal ---------------- */
 function EntryModal({ editing, onClose }) {
-  const S = TRAX.Store;
+  const S = TRAX.Store.data;
   const today = new Date().toISOString().slice(0, 10);
   const blank = { date: today, type: 'expense', account: '', desc: '', amount: '', ref: '', usdInrRate: 84, paidBy: '', paidTo: '', notes: '' };
   const [f, setF] = useState(editing ? { ...editing, amount: String(editing.amount) } : blank);
