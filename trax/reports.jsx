@@ -36,10 +36,13 @@ function RSec({ kind, children, right }) {
     React.createElement('span', { className: 'bar' }), children,
     right && React.createElement('span', { style: { marginLeft: 'auto', fontFamily: 'var(--mono)' } }, right));
 }
-function RLine({ code, label, value, cls }) {
+function RLine({ code, label, value, cls, currency }) {
   return React.createElement('div', { className: 'rpt-line ' + (cls || '') },
     React.createElement('span', null, code && React.createElement('span', { className: 'lcode' }, code), label),
-    React.createElement('span', { className: 'lv' }, value));
+    React.createElement('span', { className: 'lv' },
+      typeof value === 'string'
+        ? React.createElement(FlipBoard, { text: value, epoch: currency || 0 })
+        : value));
 }
 
 function periodEntries(S, period) { return S.entries.filter(e => CALC.inPeriod(e.date, period)); }
@@ -65,14 +68,14 @@ function PLReport({ S, currency }) {
   const net = totInc - totExp;
   return React.createElement(ReportShell, { title: 'Profit & Loss Statement', period, setPeriod },
     React.createElement(RSec, { kind: 'inc' }, 'Revenue'),
-    inc.length ? inc.map((r, i) => React.createElement(RLine, { key: i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency) }))
-      : React.createElement(RLine, { label: React.createElement('span', { style: { color: 'var(--text-3)' } }, 'No revenue recorded'), value: CALC.fmt(0, currency) }),
-    React.createElement(RLine, { label: 'Total Revenue', value: CALC.fmt(totInc, currency), cls: 'sub' }),
+    inc.length ? inc.map((r, i) => React.createElement(RLine, { key: i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency), currency }))
+      : React.createElement(RLine, { label: React.createElement('span', { style: { color: 'var(--text-3)' } }, 'No revenue recorded'), value: CALC.fmt(0, currency), currency }),
+    React.createElement(RLine, { label: 'Total Revenue', value: CALC.fmt(totInc, currency), cls: 'sub', currency }),
     React.createElement(RSec, { kind: 'exp' }, 'Operating Expenses'),
-    exp.length ? exp.map((r, i) => React.createElement(RLine, { key: i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency) }))
-      : React.createElement(RLine, { label: React.createElement('span', { style: { color: 'var(--text-3)' } }, 'No expenses recorded'), value: CALC.fmt(0, currency) }),
-    React.createElement(RLine, { label: 'Total Expenses', value: CALC.fmt(totExp, currency), cls: 'sub' }),
-    React.createElement(RLine, { label: net >= 0 ? 'Net Profit' : 'Net Loss', value: CALC.fmt(net, currency), cls: 'net' })
+    exp.length ? exp.map((r, i) => React.createElement(RLine, { key: i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency), currency }))
+      : React.createElement(RLine, { label: React.createElement('span', { style: { color: 'var(--text-3)' } }, 'No expenses recorded'), value: CALC.fmt(0, currency), currency }),
+    React.createElement(RLine, { label: 'Total Expenses', value: CALC.fmt(totExp, currency), cls: 'sub', currency }),
+    React.createElement(RLine, { label: net >= 0 ? 'Net Profit' : 'Net Loss', value: CALC.fmt(net, currency), cls: 'net', currency })
   );
 }
 
@@ -89,20 +92,20 @@ function IEReport({ S, currency }) {
     React.createElement('div', { className: 'rpt-cols' },
       React.createElement('div', null,
         React.createElement(RSec, { kind: 'inc' }, 'Income'),
-        inc.length ? inc.map((r, i) => React.createElement(RLine, { key: i, label: r.name, value: CALC.fmt(r.amount, currency) }))
-          : React.createElement(RLine, { label: React.createElement('span', { style: { color: 'var(--text-3)' } }, '\u2014'), value: CALC.fmt(0, currency) }),
-        React.createElement(RLine, { label: 'Total Income', value: CALC.fmt(totInc, currency), cls: 'sub' })
+        inc.length ? inc.map((r, i) => React.createElement(RLine, { key: i, label: r.name, value: CALC.fmt(r.amount, currency), currency }))
+          : React.createElement(RLine, { label: React.createElement('span', { style: { color: 'var(--text-3)' } }, '\u2014'), value: CALC.fmt(0, currency), currency }),
+        React.createElement(RLine, { label: 'Total Income', value: CALC.fmt(totInc, currency), cls: 'sub', currency })
       ),
       React.createElement('div', null,
         React.createElement(RSec, { kind: 'exp' }, 'Expenditure'),
-        exp.length ? exp.map((r, i) => React.createElement(RLine, { key: i, label: r.name, value: CALC.fmt(r.amount, currency) }))
-          : React.createElement(RLine, { label: React.createElement('span', { style: { color: 'var(--text-3)' } }, '\u2014'), value: CALC.fmt(0, currency) }),
-        React.createElement(RLine, { label: 'Total Expenditure', value: CALC.fmt(totExp, currency), cls: 'sub' })
+        exp.length ? exp.map((r, i) => React.createElement(RLine, { key: i, label: r.name, value: CALC.fmt(r.amount, currency), currency }))
+          : React.createElement(RLine, { label: React.createElement('span', { style: { color: 'var(--text-3)' } }, '\u2014'), value: CALC.fmt(0, currency), currency }),
+        React.createElement(RLine, { label: 'Total Expenditure', value: CALC.fmt(totExp, currency), cls: 'sub', currency })
       )
     ),
     React.createElement('div', { className: 'rpt-balance ' + (net >= 0 ? 'ok' : 'no') },
       React.createElement('span', null, net >= 0 ? 'Surplus' : 'Deficit'),
-      React.createElement('span', { className: 'num' }, CALC.fmt(net, currency))
+      React.createElement('span', { className: 'num' }, React.createElement(FlipBoard, { text: CALC.fmt(net, currency), epoch: currency }))
     )
   );
 }
@@ -125,16 +128,16 @@ function BSReport({ S, currency }) {
     React.createElement('div', { className: 'rpt-cols' },
       React.createElement('div', null,
         React.createElement(RSec, { kind: 'ast' }, 'Assets'),
-        assets.length ? assets.map((r, i) => React.createElement(RLine, { key: i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency) }))
-          : React.createElement(RLine, { label: React.createElement('span', { style: { color: 'var(--text-3)' } }, 'No assets recorded'), value: CALC.fmt(0, currency) }),
-        React.createElement(RLine, { label: 'Total Assets', value: CALC.fmt(totAssets, currency), cls: 'sub' })
+        assets.length ? assets.map((r, i) => React.createElement(RLine, { key: i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency), currency }))
+          : React.createElement(RLine, { label: React.createElement('span', { style: { color: 'var(--text-3)' } }, 'No assets recorded'), value: CALC.fmt(0, currency), currency }),
+        React.createElement(RLine, { label: 'Total Assets', value: CALC.fmt(totAssets, currency), cls: 'sub', currency })
       ),
       React.createElement('div', null,
         React.createElement(RSec, { kind: 'lia' }, 'Liabilities & Equity'),
-        liab.map((r, i) => React.createElement(RLine, { key: 'l' + i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency) })),
-        equity.map((r, i) => React.createElement(RLine, { key: 'e' + i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency) })),
-        React.createElement(RLine, { label: 'Retained Earnings', value: CALC.fmt(retained, currency) }),
-        React.createElement(RLine, { label: 'Total Liab. & Equity', value: CALC.fmt(totLiab + totEquity, currency), cls: 'sub' })
+        liab.map((r, i) => React.createElement(RLine, { key: 'l' + i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency), currency })),
+        equity.map((r, i) => React.createElement(RLine, { key: 'e' + i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency), currency })),
+        React.createElement(RLine, { label: 'Retained Earnings', value: CALC.fmt(retained, currency), currency }),
+        React.createElement(RLine, { label: 'Total Liab. & Equity', value: CALC.fmt(totLiab + totEquity, currency), cls: 'sub', currency })
       )
     ),
     React.createElement('div', { className: 'rpt-balance ' + (balanced ? 'ok' : 'no') },
@@ -177,15 +180,15 @@ function TBReport({ S, currency }) {
                 React.createElement('td', null, React.createElement('span', { className: 't-id' }, r.code)),
                 React.createElement('td', null, React.createElement('span', { className: 't-desc' }, r.name)),
                 React.createElement('td', null, React.createElement(TypeBadge, { type: r.type })),
-                React.createElement('td', { className: 'r num' }, r.debit ? CALC.fmt(r.debit, currency) : '\u2014'),
-                React.createElement('td', { className: 'r num' }, r.credit ? CALC.fmt(r.credit, currency) : '\u2014')
+                React.createElement('td', { className: 'r num' }, r.debit ? React.createElement(FlipBoard, { text: CALC.fmt(r.debit, currency), epoch: currency }) : '\u2014'),
+                React.createElement('td', { className: 'r num' }, r.credit ? React.createElement(FlipBoard, { text: CALC.fmt(r.credit, currency), epoch: currency }) : '\u2014')
               ))
         ),
         rows.length > 0 && React.createElement('tfoot', null, React.createElement('tr', { style: { background: 'var(--bg-inset)', fontWeight: 700 } },
           React.createElement('td', { colSpan: 3, style: { fontFamily: 'var(--ui)', fontWeight: 700, color: balanced ? 'var(--pos)' : 'var(--neg)' } },
             balanced ? '\u2713 In balance' : 'Out of balance'),
-          React.createElement('td', { className: 'r num', style: { fontWeight: 700 } }, CALC.fmt(totD, currency)),
-          React.createElement('td', { className: 'r num', style: { fontWeight: 700 } }, CALC.fmt(totC, currency))
+          React.createElement('td', { className: 'r num', style: { fontWeight: 700 } }, React.createElement(FlipBoard, { text: CALC.fmt(totD, currency), epoch: currency })),
+          React.createElement('td', { className: 'r num', style: { fontWeight: 700 } }, React.createElement(FlipBoard, { text: CALC.fmt(totC, currency), epoch: currency }))
         ))
       )
     )

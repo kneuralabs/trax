@@ -32,7 +32,8 @@ function Dashboard({ S, currency, go, openEntry }) {
       cells.map((c, i) => React.createElement('div', { className: 'tk', key: i },
         React.createElement('div', { className: 'tk-label' },
           React.createElement('span', { className: 'swatch', style: { background: c.color } }), c.label),
-        React.createElement('div', { className: 'tk-val', style: { color: c.plain ? 'var(--text)' : c.color } }, c.val),
+        React.createElement('div', { className: 'tk-val', style: { color: c.plain ? 'var(--text)' : c.color } },
+          React.createElement(FlipBoard, { text: c.val, epoch: currency })),
         React.createElement('div', { className: 'tk-sub' },
           c.cls && React.createElement('span', { className: 'tk-delta ' + c.cls }, c.cls === 'up' ? '\u25B2' : '\u25BC'),
           c.sub)
@@ -79,7 +80,7 @@ function LedgerTable({ rows, currency, openEntry, compact }) {
       React.createElement('th', { style: { width: 54 } }, '')
     )),
     React.createElement('tbody', null, rows.map(e => React.createElement('tr', { key: e.id },
-      React.createElement('td', null, React.createElement('span', { className: 't-id' }, React.createElement(RollDigits, { text: e.txnId.replace('TXN-', '#') }))),
+      React.createElement('td', null, React.createElement('span', { className: 't-id' }, React.createElement(FlipBoard, { text: e.txnId.replace('TXN-', '#') }))),
       React.createElement('td', { className: 'num', style: { color: 'var(--text-2)' } }, fmtDate(e.date)),
       React.createElement('td', null, React.createElement(TypeBadge, { type: e.type })),
       !compact && React.createElement('td', null, e.account || '\u2014'),
@@ -90,7 +91,8 @@ function LedgerTable({ rows, currency, openEntry, compact }) {
       ),
       React.createElement('td', { className: 'r' },
         React.createElement('span', { className: 't-amt ' + (e.type === 'income' ? 'pos' : e.type === 'expense' ? 'neg' : '') },
-          (e.type === 'expense' ? '\u2212' : e.type === 'income' ? '+' : '') + CALC.fmtRaw(e, currency).replace('\u2212', ''))
+          (e.type === 'expense' ? '\u2212' : e.type === 'income' ? '+' : ''),
+          React.createElement(FlipBoard, { text: CALC.fmtRaw(e, currency).replace('\u2212', ''), epoch: currency }))
       ),
       React.createElement('td', null, React.createElement('div', { className: 'rowact' },
         React.createElement('button', { className: 'iconmini', title: 'Edit', onClick: () => openEntry(e) }, React.createElement(Icon, { name: 'edit', w: 13 })),
@@ -176,8 +178,10 @@ function Accounts({ S, currency, openAccount }) {
               React.createElement('td', null, React.createElement('span', { className: 't-id' }, a.code)),
               React.createElement('td', null, React.createElement('span', { className: 't-desc' }, a.name)),
               React.createElement('td', null, React.createElement(TypeBadge, { type: a.type })),
-              React.createElement('td', { className: 'r num', style: { color: 'var(--text-2)' } }, u.n || '\u2014'),
-              React.createElement('td', { className: 'r num', style: { fontWeight: 600 } }, u.sum ? CALC.fmt(u.sum, currency) : '\u2014'),
+              React.createElement('td', { className: 'r num', style: { color: 'var(--text-2)' } },
+                u.n ? React.createElement(FlipBoard, { text: String(u.n), epoch: currency }) : '\u2014'),
+              React.createElement('td', { className: 'r num', style: { fontWeight: 600 } },
+                u.sum ? React.createElement(FlipBoard, { text: CALC.fmt(u.sum, currency), epoch: currency }) : '\u2014'),
               React.createElement('td', null, React.createElement('div', { className: 'rowact' },
                 React.createElement('button', { className: 'iconmini', title: 'Edit', onClick: () => openAccount(a) }, React.createElement(Icon, { name: 'edit', w: 13 })),
                 React.createElement('button', { className: 'iconmini del', title: 'Delete', onClick: () => delAcc(a) }, React.createElement(Icon, { name: 'trash', w: 13 }))

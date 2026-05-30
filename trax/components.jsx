@@ -109,19 +109,52 @@ function CatBars({ rows, currency, color }) {
   );
 }
 
-/* ---------- cash register digit roller ---------- */
-function RollDigits({ text }) {
-  return React.createElement(React.Fragment, null,
-    text.split('').map((ch, i) => {
-      if (!/[0-9]/.test(ch)) return React.createElement('span', { key: i }, ch);
-      return React.createElement('span', { key: i, className: 'digit-col' },
-        React.createElement('span', {
-          className: 'digit-col-inner',
-          style: { animationDelay: (i * 40) + 'ms' }
-        }, ch)
-      );
-    })
+/* ---------- airport split-flap digit ---------- */
+const FLIP_CHARS = '0123456789';
+
+function FlipChar({ char, index, epoch }) {
+  const isDigit = /[0-9]/.test(char);
+  const [{ disp, key }, setState] = useState({
+    disp: isDigit ? FLIP_CHARS[Math.floor(Math.random() * 10)] : char,
+    key: 0,
+  });
+  const tid = useRef(null);
+
+  useEffect(() => {
+    if (!isDigit) { setState({ disp: char, key: 0 }); return; }
+
+    const CYCLES = 12;
+    let count = 0;
+
+    function tick() {
+      count++;
+      const done = count >= CYCLES;
+      setState(s => ({
+        disp: done ? char : FLIP_CHARS[Math.floor(Math.random() * 10)],
+        key: s.key + 1,
+      }));
+      if (!done) tid.current = setTimeout(tick, 28 + count * 5);
+    }
+
+    tid.current = setTimeout(tick, index * 52);
+    return () => clearTimeout(tid.current);
+  }, [char, epoch]);
+
+  if (!isDigit) return React.createElement('span', null, char);
+
+  return React.createElement('span', { className: 'flip-outer' },
+    React.createElement('span', { key, className: 'flip-char' }, disp)
   );
 }
 
-Object.assign(window, { Icon, useStore, toast, Toast, TypeBadge, Empty, BarChart, CatBars, RollDigits });
+/* FlipBoard — wrap any numeric string in split-flap animation.
+   Pass a unique `epoch` prop (e.g. currency key) to re-trigger on change. */
+function FlipBoard({ text, epoch }) {
+  return React.createElement(React.Fragment, null,
+    String(text).split('').map((ch, i) =>
+      React.createElement(FlipChar, { key: i, char: ch, index: i, epoch: epoch || 0 })
+    )
+  );
+}
+
+Object.assign(window, { Icon, useStore, toast, Toast, TypeBadge, Empty, BarChart, CatBars, FlipBoard });

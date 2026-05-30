@@ -571,18 +571,22 @@ select.input { cursor: pointer; -webkit-appearance: none; appearance: none; back
   .content { max-width: 100%; padding: 0; }
 }
 
-/* ---- cash register digit animation ---- */
-.digit-col {
-  display: inline-flex; flex-direction: column; overflow: hidden;
-  height: 1.2em; vertical-align: middle; line-height: 1.2;
+/* ---- airport split-flap digit animation ---- */
+.flip-outer {
+  display: inline-block;
+  perspective: 320px;
+  vertical-align: bottom;
 }
-.digit-col-inner {
-  display: flex; flex-direction: column;
-  animation: digit-roll 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+.flip-char {
+  display: inline-block;
+  animation: flip-char 72ms ease-in both;
+  transform-origin: 50% 60%;
+  backface-visibility: hidden;
 }
-@keyframes digit-roll {
-  from { transform: translateY(-90%); opacity: 0.2; }
-  to   { transform: translateY(0);    opacity: 1; }
+@keyframes flip-char {
+  0%   { transform: rotateX(-90deg); opacity: 0.15; }
+  60%  { transform: rotateX(8deg);   opacity: 1; }
+  100% { transform: rotateX(0deg);   opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
