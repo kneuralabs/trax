@@ -91,6 +91,15 @@
   }
 
   /* ---------- GitHub helpers ---------- */
+  // Never let the PAT (or the gh config object that carries it) reach logs or UI.
+  function sanitizeError(e, token) {
+    let msg = String((e && e.message) || e);
+    const t = token || (Store.gh && Store.gh.token);
+    if (t) msg = msg.split(t).join('[redacted]');
+    msg = msg.replace(/\b(gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]{8,})\b/g, '[redacted]');
+    return msg;
+  }
+
   function parseGhUrl(url) {
     // https://github.com/owner/repo/blob/branch/path/to/file
     try {
@@ -141,7 +150,11 @@
         persistLocal();
         emit();
         return Store.source;
-      } catch (e) { console.warn('GitHub load failed, falling back', e); }
+      } catch (e) {
+        console.warn('GitHub load failed, falling back: ' + sanitizeError(e));
+        Store.loadWarning = 'GitHub load failed — showing local/seed data';
+        try { if (typeof window.toast === 'function') window.toast('GitHub load failed — using local data', 'err'); } catch (e2) {}
+      }
     }
     // 2. localStorage working copy
     try {
@@ -177,7 +190,7 @@
         localStorage.setItem(LS_GH, JSON.stringify(Store.gh));
         return { ok: true, committed: true };
       } catch (e) {
-        return { ok: false, committed: false, error: String(e.message || e) };
+        return { ok: false, committed: false, error: sanitizeError(e) };
       }
     }
     return { ok: true, committed: false };
@@ -229,7 +242,10 @@
     const parsed = parseGhUrl(url);
     if (!parsed) throw new Error('Could not parse GitHub URL');
     const gh = Object.assign({ token }, parsed);
-    const { sha, content } = await ghGet(gh); // validates token + reads
+    let res;
+    try { res = await ghGet(gh); } // validates token + reads
+    catch (e) { throw new Error(sanitizeError(e, token)); }
+    const { sha, content } = res;
     gh.sha = sha;
     Store.gh = gh;
     Store.data = normalize(JSON.parse(content));
@@ -253,7 +269,15 @@
   }
   async function importJSON(file) {
     const text = await file.text();
-    Store.data = normalize(JSON.parse(text));
+    let parsed;
+    try { parsed = JSON.parse(text); } catch (e) { throw new Error('Import failed: file is not valid JSON'); }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || !Array.isArray(parsed.entries) ||
+        (parsed.accounts != null && !Array.isArray(parsed.accounts))) {
+      throw new Error('Import failed: invalid data shape (expected an object with an entries array)');
+    }
+    // Snapshot current data before replacing, so a bad import is recoverable.
+    try { localStorage.setItem('trax_backup_v1', serialize()); } catch (e) {}
+    Store.data = normalize(parsed);
     Store.source = 'local';
     persistLocal(); emit();
   }

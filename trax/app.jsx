@@ -166,8 +166,8 @@ function App() {
             ))
           ),
           /* source pill */
-          React.createElement('button', { className: 'pill ' + pillCls, onClick: () => setGhModal(true), title: 'Data source' },
-            React.createElement('span', { className: 'dot' }), pillTxt),
+          React.createElement('button', { className: 'pill ' + pillCls, onClick: () => setGhModal(true), title: S.loadWarning ? 'Data source — ' + S.loadWarning : 'Data source' },
+            React.createElement('span', { className: 'dot' }), pillTxt, S.loadWarning && ' ⚠'),
           /* theme */
           React.createElement('button', { className: 'icobtn', 'data-tip': theme === 'dark' ? 'Light mode' : 'Dark mode', onClick: () => TRAX.setPref('theme', theme === 'dark' ? 'light' : 'dark') },
             React.createElement(Icon, { name: theme === 'dark' ? 'sun' : 'moon', w: 15 })),
