@@ -49,27 +49,25 @@ function RLine({ code, label, value, cls, currency, amount, valCls }) {
         : value));
 }
 
-function periodEntries(S, period) { return S.entries.filter(e => CALC.inPeriod(e.date, period)); }
+function periodEntries(S, period, refDate) { return S.entries.filter(e => CALC.inPeriod(e.date, period, refDate)); }
 
-/* group entries by account within a type, returning [{code,name,amount}] */
+/* group entries by account within a type, returning [{code,name,amount}] (delegates to CALC) */
 function groupByAccount(entries, S, type, currency) {
-  const map = {};
-  entries.filter(e => e.type === type).forEach(e => { map[e.account] = (map[e.account] || 0) + CALC.conv(e, currency); });
-  return Object.entries(map).map(([name, amount]) => {
-    const acc = S.accounts.find(a => a.name === name);
-    return { code: acc ? acc.code : '', name, amount };
-  }).sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+  return CALC.groupByAccount(entries, type, currency, S.accounts);
 }
 
 /* ============ P&L ============ */
 function PLReport({ S, currency }) {
   const [period, setPeriod] = useState('all');
-  const ent = periodEntries(S, period);
-  const inc = groupByAccount(ent, S, 'income', currency);
-  const exp = groupByAccount(ent, S, 'expense', currency);
-  const totInc = inc.reduce((s, r) => s + r.amount, 0);
-  const totExp = exp.reduce((s, r) => s + r.amount, 0);
-  const net = totInc - totExp;
+  const { inc, exp, totInc, totExp, net } = useMemo(() => {
+    const refDate = new Date(); // one consistent reference date per computation
+    const ent = periodEntries(S, period, refDate);
+    const inc = groupByAccount(ent, S, 'income', currency);
+    const exp = groupByAccount(ent, S, 'expense', currency);
+    const totInc = inc.reduce((s, r) => s + r.amount, 0);
+    const totExp = exp.reduce((s, r) => s + r.amount, 0);
+    return { inc, exp, totInc, totExp, net: totInc - totExp };
+  }, [S.entries, currency, period]);
   return React.createElement(ReportShell, { title: 'Profit & Loss Statement', period, setPeriod },
     React.createElement(RSec, { kind: 'inc' }, 'Revenue'),
     inc.length ? inc.map((r, i) => React.createElement(RLine, { key: i, code: r.code, label: r.name, value: CALC.fmt(r.amount, currency), currency, valCls: 'pos' }))
@@ -86,12 +84,15 @@ function PLReport({ S, currency }) {
 /* ============ Income & Expense ============ */
 function IEReport({ S, currency }) {
   const [period, setPeriod] = useState('all');
-  const ent = periodEntries(S, period);
-  const inc = groupByAccount(ent, S, 'income', currency);
-  const exp = groupByAccount(ent, S, 'expense', currency);
-  const totInc = inc.reduce((s, r) => s + r.amount, 0);
-  const totExp = exp.reduce((s, r) => s + r.amount, 0);
-  const net = totInc - totExp;
+  const { inc, exp, totInc, totExp, net } = useMemo(() => {
+    const refDate = new Date();
+    const ent = periodEntries(S, period, refDate);
+    const inc = groupByAccount(ent, S, 'income', currency);
+    const exp = groupByAccount(ent, S, 'expense', currency);
+    const totInc = inc.reduce((s, r) => s + r.amount, 0);
+    const totExp = exp.reduce((s, r) => s + r.amount, 0);
+    return { inc, exp, totInc, totExp, net: totInc - totExp };
+  }, [S.entries, currency, period]);
   return React.createElement(ReportShell, { title: 'Income & Expenditure', period, setPeriod },
     React.createElement('div', { className: 'rpt-cols' },
       React.createElement('div', null,
@@ -117,17 +118,21 @@ function IEReport({ S, currency }) {
 /* ============ Balance Sheet ============ */
 function BSReport({ S, currency }) {
   const [period, setPeriod] = useState('all');
-  const ent = periodEntries(S, period);
-  const assets = groupByAccount(ent, S, 'asset', currency);
-  const liab = groupByAccount(ent, S, 'liability', currency);
-  const equity = groupByAccount(ent, S, 'equity', currency);
-  const totAssets = assets.reduce((s, r) => s + r.amount, 0);
-  const totLiab = liab.reduce((s, r) => s + r.amount, 0);
-  const totInc = ent.filter(e => e.type === 'income').reduce((s, e) => s + CALC.conv(e, currency), 0);
-  const totExp = ent.filter(e => e.type === 'expense').reduce((s, e) => s + CALC.conv(e, currency), 0);
-  const retained = totInc - totExp;
-  const totEquity = equity.reduce((s, r) => s + r.amount, 0) + retained;
-  const balanced = Math.abs(totAssets - (totLiab + totEquity)) < 0.01;
+  const { assets, liab, equity, totAssets, totLiab, retained, totEquity, balanced } = useMemo(() => {
+    const refDate = new Date();
+    const ent = periodEntries(S, period, refDate);
+    const assets = groupByAccount(ent, S, 'asset', currency);
+    const liab = groupByAccount(ent, S, 'liability', currency);
+    const equity = groupByAccount(ent, S, 'equity', currency);
+    const totAssets = assets.reduce((s, r) => s + r.amount, 0);
+    const totLiab = liab.reduce((s, r) => s + r.amount, 0);
+    const totInc = ent.filter(e => e.type === 'income').reduce((s, e) => s + CALC.conv(e, currency), 0);
+    const totExp = ent.filter(e => e.type === 'expense').reduce((s, e) => s + CALC.conv(e, currency), 0);
+    const retained = totInc - totExp;
+    const totEquity = equity.reduce((s, r) => s + r.amount, 0) + retained;
+    const balanced = Math.abs(totAssets - (totLiab + totEquity)) < 0.01;
+    return { assets, liab, equity, totAssets, totLiab, retained, totEquity, balanced };
+  }, [S.entries, currency, period]);
   return React.createElement(ReportShell, { title: 'Balance Sheet', period, setPeriod },
     React.createElement('div', { className: 'rpt-cols' },
       React.createElement('div', null,
@@ -154,19 +159,22 @@ function BSReport({ S, currency }) {
 /* ============ Trial Balance ============ */
 function TBReport({ S, currency }) {
   const [period, setPeriod] = useState('all');
-  const ent = periodEntries(S, period);
-  // debit nature: asset, expense ; credit nature: income, liability, equity
-  const map = {};
-  ent.forEach(e => {
-    const k = e.account || 'Unassigned';
-    if (!map[k]) map[k] = { name: k, type: e.type, debit: 0, credit: 0, code: (S.accounts.find(a => a.name === k) || {}).code || '' };
-    const v = CALC.conv(e, currency);
-    if (e.type === 'asset' || e.type === 'expense') map[k].debit += v; else map[k].credit += v;
-  });
-  const rows = Object.values(map).sort((a, b) => (a.code || '').localeCompare(b.code || ''));
-  const totD = rows.reduce((s, r) => s + r.debit, 0);
-  const totC = rows.reduce((s, r) => s + r.credit, 0);
-  const balanced = Math.abs(totD - totC) < 0.01;
+  const { rows, totD, totC, balanced } = useMemo(() => {
+    const refDate = new Date();
+    const ent = periodEntries(S, period, refDate);
+    // debit nature: asset, expense ; credit nature: income, liability, equity
+    const map = {};
+    ent.forEach(e => {
+      const k = e.account || 'Unassigned';
+      if (!map[k]) map[k] = { name: k, type: e.type, debit: 0, credit: 0, code: (S.accounts.find(a => a.name === k) || {}).code || '' };
+      const v = CALC.conv(e, currency);
+      if (e.type === 'asset' || e.type === 'expense') map[k].debit += v; else map[k].credit += v;
+    });
+    const rows = Object.values(map).sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+    const totD = rows.reduce((s, r) => s + r.debit, 0);
+    const totC = rows.reduce((s, r) => s + r.credit, 0);
+    return { rows, totD, totC, balanced: Math.abs(totD - totC) < 0.01 };
+  }, [S.entries, currency, period]);
   return React.createElement(ReportShell, { title: 'Trial Balance', period, setPeriod },
     React.createElement('div', { className: 'tbl-scroll' },
       React.createElement('table', { className: 'tx' },

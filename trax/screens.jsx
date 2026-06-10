@@ -14,10 +14,10 @@ function delEntry(e, after) {
 
 /* ============ DASHBOARD ============ */
 function Dashboard({ S, currency, go, openEntry }) {
-  const t = CALC.totalsByType(S.entries, currency);
-  const series = CALC.monthlySeries(S.entries, currency, 6);
-  const expCats = CALC.byAccount(S.entries, 'expense', currency);
-  const recent = [...S.entries].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id).slice(0, 8);
+  const t = useMemo(() => CALC.totalsByType(S.entries, currency), [S.entries, currency]);
+  const series = useMemo(() => CALC.monthlySeries(S.entries, currency, 6), [S.entries, currency]);
+  const expCats = useMemo(() => CALC.byAccount(S.entries, 'expense', currency), [S.entries, currency]);
+  const recent = useMemo(() => [...S.entries].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id).slice(0, 8), [S.entries]);
 
   const cells = [
     { label: 'Income', val: CALC.fmt(t.income, currency), color: 'var(--pos)', sub: S.entries.filter(e => e.type === 'income').length + ' entries' },

@@ -27,6 +27,8 @@ function EntryModal({ editing, onClose }) {
   const today = new Date().toISOString().slice(0, 10);
   const blank = { date: today, type: 'expense', account: '', desc: '', amount: '', ref: '', usdInrRate: 84, paidBy: '', paidTo: '', notes: '' };
   const [f, setF] = useState(editing ? { ...editing, amount: String(editing.amount) } : blank);
+  const [saving, setSaving] = useState(false);
+  const submittedRef = useRef(false); // guards against double-submit within one click burst
   const txnId = editing ? editing.txnId : TRAX.genTxnId(S.nextId);
   const upd = (k, v) => setF(p => ({ ...p, [k]: v }));
 
@@ -36,12 +38,20 @@ function EntryModal({ editing, onClose }) {
   }, [f.type]);
 
   function submit() {
+    if (submittedRef.current) return;
     if (!f.desc.trim()) { toast('Description is required', 'err'); return; }
     const amt = parseFloat(f.amount);
     if (!amt || amt <= 0) { toast('Enter a valid amount', 'err'); return; }
+    // usdInrRate: blank keeps the default 84; otherwise must be finite, > 0 and within 50–150
+    const rawRate = String(f.usdInrRate == null ? '' : f.usdInrRate).trim();
+    const rate = rawRate === '' ? 84 : parseFloat(rawRate);
+    if (!isFinite(rate) || rate <= 0) { toast('Enter a valid USD → INR rate', 'err'); return; }
+    if (rate < 50 || rate > 150) { toast('USD → INR rate must be between 50 and 150', 'err'); return; }
+    submittedRef.current = true;
+    setSaving(true);
     const payload = {
       date: f.date, type: f.type, account: f.account, desc: f.desc.trim(),
-      amount: amt, ref: f.ref.trim(), usdInrRate: parseFloat(f.usdInrRate) || 84,
+      amount: amt, ref: f.ref.trim(), usdInrRate: rate,
       paidBy: f.paidBy.trim(), paidTo: f.paidTo.trim(), notes: f.notes.trim(),
     };
     if (editing) TRAX.updateEntry(editing.id, payload);
@@ -58,7 +68,7 @@ function EntryModal({ editing, onClose }) {
     onClose, wide: true,
     footer: [
       React.createElement('button', { key: 'c', className: 'btn btn-ghost', onClick: onClose }, 'Cancel'),
-      React.createElement('button', { key: 's', className: 'btn btn-accent', onClick: submit }, editing ? 'Update Entry' : 'Save Entry'),
+      React.createElement('button', { key: 's', className: 'btn btn-accent', onClick: submit, disabled: saving }, editing ? 'Update Entry' : 'Save Entry'),
     ],
   },
     React.createElement('div', { className: 'dialog-bd' },
@@ -129,9 +139,12 @@ function EntryModal({ editing, onClose }) {
 function AccountModal({ editing, onClose }) {
   const [f, setF] = useState(editing || { name: '', type: 'expense', code: TRAX.nextAccountCode('expense') });
   const upd = (k, v) => setF(p => ({ ...p, [k]: v }));
+  const submittedRef = useRef(false); // guards against double-submit within one click burst
   function onType(t) { setF(p => ({ ...p, type: t, code: editing ? p.code : TRAX.nextAccountCode(t) })); }
   function submit() {
+    if (submittedRef.current) return;
     if (!f.name.trim()) { toast('Account name is required', 'err'); return; }
+    submittedRef.current = true;
     if (editing) TRAX.updateAccount(editing.id, { name: f.name.trim(), type: f.type, code: f.code.trim() });
     else TRAX.addAccount({ name: f.name.trim(), type: f.type, code: f.code.trim() });
     window.__traxSave(editing ? 'Edit account ' + f.name : 'Add account ' + f.name);
